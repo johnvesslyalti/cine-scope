@@ -15,26 +15,16 @@ export default function Page() {
     method: 'GET',
     headers: {
     accept: 'application/json',
-    Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`
+    Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`
         }
     };
-
-    const shuffleArray = (array) => {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-        }
-        return shuffled;
-    }
 
     useEffect(() => {
         const fetchMovies = async () => {
             try {
                 const response = await fetch(url, options);
                 const data = await response.json();
-                const shuffledMovies = shuffleArray(data.results);
-                setMovies(shuffledMovies);
+                setMovies(data.results);
                 setLoading(false);
             } catch(error) {
                 console.error(error);
