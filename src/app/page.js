@@ -5,6 +5,7 @@ import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import  Link  from "next/link";
 
 export default function Page() {
     const [movies, setMovies] = useState([]);
@@ -43,21 +44,23 @@ export default function Page() {
                     <div className="absolute w-5 h-5 top-1/2 left-1/2 border-2 border-t-sky-500 animate-spin rounded-xl"></div>
                 )}
                 {movies.map((movie) => (
-                    <Card className="flex flex-col h-[400px] hover:scale-102" key={movie.id}>
-                        <CardHeader className="flex-shrink-0 p-5">
-                            <img 
-                            src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                            alt={movie.title}
-                            className="object-cover rounded h-48 w-full"
-                            />
-                        </CardHeader>
-                        <CardContent className="flex flex-grow justify-center items-center overflow-hidden line-clamp-2">
-                            <p>{movie.title}</p>
-                        </CardContent>
-                        <CardFooter className="flex w-full justify-center items-center">
-                            <Button>Add to WatchList</Button>
-                        </CardFooter>
-                    </Card>
+                    <Link href={`/${movie.id}`} key={movie.id}>
+                        <Card className="flex flex-col h-[400px] hover:scale-102" >
+                            <CardHeader className="flex-shrink-0 p-5">
+                                <img 
+                                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                                alt={movie.title}
+                                className="object-cover rounded h-48 w-full"
+                                />
+                            </CardHeader>
+                            <CardContent className="flex flex-grow justify-center items-center overflow-hidden line-clamp-2">
+                                <p>{movie.title}</p>
+                            </CardContent>
+                            <CardFooter className="flex w-full justify-center items-center">
+                                <Button>Add to WatchList</Button>
+                            </CardFooter>
+                        </Card>
+                    </Link>
                 ))}
             </main>
             <footer>
