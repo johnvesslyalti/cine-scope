@@ -8,13 +8,16 @@ import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
 import { useAuth } from "../../../context/authContext";
+import CustomAlert from "../../../components/CustomAlert";
 
 export default function Page() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { user, token, login } = useAuth();
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   
 
   const togglePasswordVisibility = () => {
@@ -35,16 +38,29 @@ export default function Page() {
 
       const data = await response.json();
 
+      if(!response.ok) {
+        setMessage(data.message || "Login failed");
+        return;
+      }
+
       login(data.user, data.token);
       setEmail('');
       setPassword('');
+      setMessage("Login Successfull");
+      setLoading(true);
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
     } catch(error) {
       console.error("Signup error", error);
+      setLoading(false);
+      setMessage("Something went wrong. Please try again.");
     }
   };
 
   return (
-    <div className="h-screen flex justify-center items-center">
+    <div className="h-screen flex justify-center items-center relative">
+      {message && <CustomAlert message={message}/>}
       <button
         onClick={() => router.back()}
         className="absolute flex justify-center text-lg gap-2 hover:text-gray-300 items-center top-5 left-5 cursor-pointer"
@@ -59,7 +75,7 @@ export default function Page() {
             <Input
               name="email"
               placeholder="Email"
-              type="text"
+              type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -71,6 +87,7 @@ export default function Page() {
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="current-password"
                             />
                             <button
                                 type="button"
@@ -80,8 +97,8 @@ export default function Page() {
                                 {showPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
                         </div>
-            <Button type="submit" className="cursor-pointer">
-              Submit
+            <Button type="submit" className="cursor-pointer" disabled={loading}>
+              {loading ? "Logging in..." : "Submit"}
             </Button>
           </form>
         </CardContent>
