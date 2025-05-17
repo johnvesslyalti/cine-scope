@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { RiMovie2AiLine } from "react-icons/ri";
 import Link from "next/link";
 import { useAuth } from "../context/authContext";
+import CustomAlertDialogBox from "./CustomAlertDialogBox";
 
 export default function Navbar() {
     const { user, logout } = useAuth();
@@ -18,10 +19,10 @@ export default function Navbar() {
             </div>
             {user ? (
                 <div className="flex gap-5">
-                <Link href="/login">
+                <Link href="/watchlist">
                     <Button className="cursor-pointer">Watch List</Button>
                 </Link>
-                    <Button onClick={() => logout()} className="cursor-pointer">Logout</Button>
+                    <CustomAlertDialogBox trigger="Logout" title="Do You Really want to logout?" action={() => logout()} actionName="Logout" description={null}/>
             </div>
             ) : (
                 <div className="flex gap-5">

@@ -9,23 +9,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 
 
-export default function AlertDialogBox() {
+export default function CustomAlertDialogBox({trigger, title, description, action, actionName}) {
     return(
             <AlertDialog>
-                <AlertDialogTrigger>Open</AlertDialogTrigger>
+                <AlertDialogTrigger asChild><Button className="cursor-pointer">{trigger}</Button></AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your account
-                    and remove your data from our servers.
+                        {description}
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction>Continue</AlertDialogAction>
+                    <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                    <AlertDialogAction className="cursor-pointer" onClick={action}>{actionName}</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
