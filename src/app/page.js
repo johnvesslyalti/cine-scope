@@ -1,73 +1,77 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import  Link  from "next/link";
+import MovieCard from "../../components/MoviesCard";
+import Loading from "../../components/Loading";
 
 export default function Page() {
     const [movies, setMovies] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
-    const url = 'https://api.themoviedb.org/3/movie/popular?language=en-US&page=1';
-    const options = {
-    method: 'GET',
-    headers: {
-    accept: 'application/json',
-    Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`
+    const fetchMovies = useCallback(async () => {
+        if (loading || !hasMore) return;
+        setLoading(true);
+
+        const url = `https://api.themoviedb.org/3/movie/popular?language=en-US&page=${page}`;
+        const options = {
+            method: 'GET',
+            headers: {
+                accept: 'application/json',
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`
+            }
+        };
+
+        try {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            setMovies(prev => [...prev, ...data.results]);
+            setHasMore(data.page < data.total_pages); // or use a max limit like page < 10
+            setPage(prev => prev + 1);
+        } catch (error) {
+            console.error("Failed to fetch movies:", error);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [page, loading, hasMore]);
 
     useEffect(() => {
-        const fetchMovies = async () => {
-            try {
-                const response = await fetch(url, options);
-                const data = await response.json();
-                setMovies(data.results);
-                setLoading(false);
-            } catch(error) {
-                console.error(error);
-            }
-        }
-        fetchMovies();
+        fetchMovies(); // initial fetch
     }, []);
 
-    return(
+    useEffect(() => {
+        const handleScroll = () => {
+            if (
+                window.innerHeight + document.documentElement.scrollTop + 200 >= document.documentElement.offsetHeight &&
+                !loading && hasMore
+            ) {
+                fetchMovies();
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [fetchMovies, loading, hasMore]);
+
+    return (
         <div>
-            <div className="flex flex-col p-5 h-screen">
-                    <header>
+            <div className="flex flex-col p-5 min-h-screen">
+                <header>
                     <Navbar />
                 </header>
-                <main className="flex-grow grid grid-cols-5 p-5 gap-5 relative">
-                    {loading && (
-                        <div className="absolute w-5 h-5 top-1/2 left-1/2 border-2 border-t-sky-500 animate-spin rounded-xl"></div>
-                    )}
-                    {movies.map((movie) => (
-                        <Link href={`/${movie.id}`} key={movie.id}>
-                            <Card className="flex flex-col h-[400px] hover:scale-102" >
-                                <CardHeader className="flex-shrink-0 p-5">
-                                    <img 
-                                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                                    alt={movie.title}
-                                    className="object-cover rounded h-48 w-full"
-                                    />
-                                </CardHeader>
-                                <CardContent className="flex flex-grow justify-center items-center overflow-hidden line-clamp-2">
-                                    <p className="text-center font-bold">{movie.title}</p>
-                                </CardContent>
-                                <CardFooter className="flex w-full justify-center items-center">
-                                    <Button className="font-bold cursor-pointer">Add to WatchList</Button>
-                                </CardFooter>
-                            </Card>
-                        </Link>
+                <main className="flex-grow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 p-5 gap-5 relative">
+                    {movies.map((movie, index) => (
+                            <MovieCard key={movie.id + index + movie.title} movie={movie} index={index} />
                     ))}
+                    {loading && <Loading />
+                    }
                 </main>
             </div>
             <footer>
                 <Footer />
             </footer>
         </div>
-    )
+    );
 }
