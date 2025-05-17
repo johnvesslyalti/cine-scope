@@ -1,6 +1,6 @@
 'use client';
 
-const { createContext, useState, useEffect, useContext } = require("react");
+import { createContext, useState, useEffect, useContext } from "react";
 
 const AuthContext = createContext();
 
@@ -9,14 +9,28 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        const storedToken = localStorage.getItem("token");
+  const storedUser = localStorage.getItem("user");
+  const storedToken = localStorage.getItem("token");
 
-        if(storedUser && storedToken) {
-            setUser(storedUser);
-            setToken(storedToken);
-        }
-    }, [])
+  if (
+    storedUser && 
+    storedUser !== "undefined" && 
+    storedUser !== "null" &&
+    storedToken &&
+    storedToken !== "undefined" &&
+    storedToken !== "null"
+  ) {
+    try {
+      setUser(JSON.parse(storedUser));
+      setToken(storedToken);
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      setUser(null);
+      setToken(null);
+    }
+  }
+}, []);
+
 
     const login = (userData, token) => {
         localStorage.setItem("user", JSON.stringify(userData));

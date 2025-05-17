@@ -5,11 +5,12 @@ import jwt from 'jsonwebtoken';
 
 export async function POST(req) {
     try {
-        const { email, password } = req.json();
+        const { email, password } = await req.json();
 
         await connectDB();
 
         const user = await User.findOne({ email });
+
         if(!user) {
             return NextResponse.json({ message: "Invalid email or password"}, {status: 400});
         }

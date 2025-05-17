@@ -7,18 +7,40 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
+import { useAuth } from "../../../context/authContext";
 
 export default function Page() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { user, token, login } = useAuth();
+  
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add login logic here
+    
+    try {
+      const response = await fetch('/api/login', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      login(data.user, data.token);
+      setEmail('');
+      setPassword('');
+    } catch(error) {
+      console.error("Signup error", error);
+    }
   };
 
   return (
@@ -39,12 +61,16 @@ export default function Page() {
               placeholder="Email"
               type="text"
               autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <div className="relative">
                             <Input
                                 name="password"
                                 placeholder="Password"
                                 type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                             <button
                                 type="button"
