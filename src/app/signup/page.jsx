@@ -7,14 +7,15 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { IoIosArrowBack } from "react-icons/io";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import CustomAlert from "../../../components/CustomAlert";
 
 export default function Page() {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-
     const togglePasswordVisibility = () => {
         setShowPassword(prev => !prev);
     };
@@ -39,14 +40,20 @@ export default function Page() {
     setName('');
     setEmail('');
     setPassword('');
+    setMessage("Registration Successfull");
+    setTimeout(() => {
+        router.push("/login");
+    }, 1500);
   } catch (error) {
     console.error("Signup error:", error);
+    setMessage("Something went wrong")
   }
 };
 
 
     return (
         <div className="h-screen flex justify-center items-center">
+            {message && <CustomAlert message={message}/>}
             <button
                 onClick={() => router.back()}
                 className="absolute flex justify-center text-lg gap-2 hover:text-gray-300 items-center top-5 left-5 cursor-pointer"

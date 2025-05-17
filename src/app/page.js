@@ -54,10 +54,10 @@ export default function Page() {
                                 />
                             </CardHeader>
                             <CardContent className="flex flex-grow justify-center items-center overflow-hidden line-clamp-2">
-                                <p>{movie.title}</p>
+                                <p className="text-center font-bold">{movie.title}</p>
                             </CardContent>
                             <CardFooter className="flex w-full justify-center items-center">
-                                <Button>Add to WatchList</Button>
+                                <Button className="font-bold cursor-pointer">Add to WatchList</Button>
                             </CardFooter>
                         </Card>
                     </Link>
