@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id @default(uuid())
+  name      String
+  email     String      @unique
+  password  String
+  reviews   Review[]
+  ratings   Rating[]
+  watchlist Watchlist[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Movie {
+  id          String       @id @default(uuid())
+  title       String
+  overview    String?
+  releaseDate DateTime
+  posterUrl   String?
+  backdropUrl String?
+  genres      Genre[]      @relation("MovieGenres")
+  reviews     Review[]
+  ratings     Rating[]
+  cast        CastMember[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Watchlist   Watchlist[]
+}
+
+model TVShow {
+  id           String       @id @default(uuid())
+  title        String
+  overview     String?
+  firstAirDate DateTime
+  posterUrl    String?
+  backdropUrl  String?
+  genres       Genre[]      @relation("TVGenres")
+  reviews      Review[]
+  ratings      Rating[]
+  cast         CastMember[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  Watchlist    Watchlist[]
+}
+
+model Genre {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  movies  Movie[]  @relation("MovieGenres")
+  tvshows TVShow[] @relation("TVGenres")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  content   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  movie     Movie?   @relation(fields: [movieId], references: [id])
+  movieId   String?
+  tvShow    TVShow?  @relation(fields: [tvShowId], references: [id])
+  tvShowId  String?
+  createdAt DateTime @default(now())
+}
+
+model Rating {
+  id       String  @id @default(uuid())
+  score    Int
+  user     User    @relation(fields: [userId], references: [id])
+  userId   String
+  movie    Movie?  @relation(fields: [movieId], references: [id])
+  movieId  String?
+  tvShow   TVShow? @relation(fields: [tvShowId], references: [id])
+  tvShowId String?
+}
+
+model Watchlist {
+  id       String   @id @default(uuid())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+  movie    Movie?   @relation(fields: [movieId], references: [id])
+  movieId  String?
+  tvShow   TVShow?  @relation(fields: [tvShowId], references: [id])
+  tvShowId String?
+  addedAt  DateTime @default(now())
+}
+
+model CastMember {
+  id        String  @id @default(uuid())
+  name      String
+  character String
+  movie     Movie?  @relation(fields: [movieId], references: [id])
+  movieId   String?
+  tvShow    TVShow? @relation(fields: [tvShowId], references: [id])
+  tvShowId  String?
+}
