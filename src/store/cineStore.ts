@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type Movie = {
+export type Movie = {
     id: number;
     title: string;
     name?: string;

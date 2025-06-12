@@ -26,43 +26,41 @@ export default function TrendingCarousel() {
     fetchTrendingMovies();
   }, []);
 
-  if (!trending || trending.length === 0) {
-    return (
-      <div className="absolute top-20 left-5 rounded h-5 w-5 border-2 animate-spin border-white"></div>
-    );
-  }
-
   return (
-    <div
-      ref={sliderRef}
-      className="keen-slider h-[400px] relative rounded-xl overflow-hidden p-5"
-    >
-      {trending.map((movie, index) => (
-        <div key={movie.id} className="keen-slider__slide relative">
-          <div className="relative w-full h-full">
-            {/* Movie Image */}
-            <img
-              src={
-                movie.poster_path
-                  ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                  : "/fallback.jpg"
-              }
-              alt={movie.title || movie.name || "Untitled"}
-              className="w-full h-full object-contain rounded-xl"
-            />
-
-            {/* Overlay with Movie Title and Number */}
-            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent px-5 py-6 flex items-end justify-between text-white">
-              <div className="text-xl font-semibold truncate max-w-[85%]">
-                {movie.title || movie.name || "Untitled"}
-              </div>
-              <div className="text-2xl font-bold bg-red-600 px-3 py-1 rounded-full">
-                {index + 1}
+    <section className="px-6 py-4">
+      <h2 className="text-2xl font-semibold mb-4 text-white">Trending Today</h2>
+      <div
+        ref={sliderRef}
+        className="keen-slider h-[400px] relative rounded-xl overflow-hidden"
+      >
+        {trending.map((movie, index) => (
+          <div
+            key={movie.id}
+            className="keen-slider__slide relative px-2"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg group">
+              <img
+                src={
+                  movie.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                    : "/fallback.jpg"
+                }
+                alt={movie.title || movie.name || "Untitled"}
+                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+              {/* Overlay */}
+              <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent px-4 py-4 flex items-end justify-between text-white">
+                <h3 className="text-lg font-semibold truncate max-w-[80%]">
+                  {movie.title || movie.name || "Untitled"}
+                </h3>
+                <span className="text-lg font-bold bg-red-600 px-3 py-1 rounded-full shadow-md">
+                  {index + 1}
+                </span>
               </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </section>
   );
 }

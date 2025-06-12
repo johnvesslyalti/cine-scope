@@ -24,7 +24,7 @@ export const useAutoSlider = (options: KeenSliderOptions = {}) => {
         if (slider) {
           slider.next()
         }
-      }, 5000)
+      }, 3000)
     }
 
     // Give slider time to initialize fully
