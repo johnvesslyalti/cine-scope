@@ -26,6 +26,8 @@ Installation:
     2. npm install @prisma/client prisma next-auth @next-auth/prisma-adapter zustand shadcn/ui react-icons
     3. npm install bcrypt jsonwebtoken zod
     4. npm install --save-dev @types/jsonwebtoken @types/bcrypt
+    5. npm install keen-slider
+    6. npm install axios
 
 Folder Structure:
 
