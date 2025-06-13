@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Movie } from '@/store/cineStore';
+import { TMDB_API } from '@/lib/tmdb';
 
 export default function NowPlayingMovies() {
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
@@ -10,9 +11,7 @@ export default function NowPlayingMovies() {
   useEffect(() => {
     const fetchNowPlaying = async () => {
       try {
-        const res = await axios.get(
-          `https://api.themoviedb.org/3/movie/now_playing?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US&page=1`
-        );
+        const res = await axios.get(TMDB_API.nowplaying);
         setNowPlaying(res.data.results.slice(0, 15));
       } catch (err) {
         console.error("Failed to fetch now playing movies:", err);

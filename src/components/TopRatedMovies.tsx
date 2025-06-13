@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Movie } from '@/store/cineStore';
 import Link from 'next/link';
+import { TMDB_API } from '@/lib/tmdb';
 
 export default function TopRatedMovies() {
   const [topRated, setTopRated] = useState<Movie[]>([]);
@@ -11,9 +12,7 @@ export default function TopRatedMovies() {
   useEffect(() => {
     const fetchTopRated = async () => {
       try {
-        const res = await axios.get(
-          `https://api.themoviedb.org/3/movie/top_rated?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-        );
+        const res = await axios.get(TMDB_API.top_rated);
         setTopRated(res.data.results);
       } catch (error) {
         console.error("Failed to fetch top rated movies:", error);

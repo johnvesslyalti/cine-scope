@@ -5,6 +5,7 @@ import { useCineStore } from "@/store/cineStore";
 import { useEffect } from "react";
 import axios from "axios";
 import "keen-slider/keen-slider.min.css";
+import { TMDB_API } from "@/lib/tmdb";
 
 export default function TrendingCarousel() {
   const { trending, setTrending } = useCineStore();
@@ -13,9 +14,7 @@ export default function TrendingCarousel() {
   useEffect(() => {
     const fetchTrendingMovies = async () => {
       try {
-        const res = await axios.get(
-          `https://api.themoviedb.org/3/trending/all/day?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-        );
+        const res = await axios.get(TMDB_API.trending);
         const movies = res.data.results.slice(0, 10);
         setTrending(movies);
       } catch (err) {
