@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function Post(req: Request) {
+export async function POST(req: Request) {
     const body = await req.json();
     const parsed = loginSchema.safeParse(body);
 
