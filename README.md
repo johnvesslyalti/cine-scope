@@ -29,6 +29,12 @@ Installation:
     5. npm install keen-slider
     6. npm install axios
 
+    shadcn:
+        npx shadcn@latest add card
+        npx shadcn@latest add label
+        npx shadcn@latest add input
+        npx shadcn@latest add alert
+
 Folder Structure:
 
     cine-scope/
