@@ -5,14 +5,7 @@ import axios from 'axios';
 import Image from 'next/image';
 import { useAuth } from '@/store/useAuth';
 import { FaTrash } from 'react-icons/fa';
-
-interface WatchlistItem {
-  id: string;
-  movieId: string;
-  title: string;
-  posterUrl: string;
-  createdAt: string;
-}
+import { WatchlistItem } from '@/types';
 
 export default function Watchlist() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);

@@ -11,8 +11,10 @@ export interface AuthState {
     logout: () => void
 }
 
-export interface WatchListMovie {
-    id: string;
-    title: string;
-    poster_path: string;
+interface WatchlistItem {
+  id: string;
+  movieId: string;
+  title: string;
+  posterUrl: string;
+  createdAt: string;
 }
