@@ -2,32 +2,35 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Movie, useCineStore } from '@/store/cineStore';
-import Link from 'next/link';
+import { Movie } from '@/store/cineStore';
 import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import Image from 'next/image';
+import Link from 'next/link';
 import { addToWatchlist } from '@/lib/addToWatchlist';
-import { WatchListMovie } from '@/types';
 import { useAuth } from '@/store/useAuth';
+
+// Define a light type for watchlist
+type WatchlistMovie = {
+  id: string;
+  title: string;
+  poster_path: string;
+};
 
 export default function Popular() {
   const [popular, setPopular] = useState<Movie[]>([]);
+  const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
-
-  const { watchlist } = useCineStore();
   const { token } = useAuth();
 
   useEffect(() => {
     const fetchPopular = async () => {
-      setLoading(true);
       try {
         const res = await axios.get(TMDB_API.popular);
         setPopular(res.data.results);
-      } catch (error) {
-        console.error('Failed to fetch popular movies:', error);
+      } catch (err) {
+        console.error('Failed to fetch popular movies:', err);
         setError(true);
       } finally {
         setLoading(false);
@@ -37,15 +40,36 @@ export default function Popular() {
     fetchPopular();
   }, []);
 
-  const handleAdd = async (movie: WatchListMovie) => {
+  // Sync watchlist bookmark status
+  useEffect(() => {
+    const fetchWatchlist = async () => {
+      if (!token) return;
+
+      try {
+        const res = await axios.get('/api/watchlist', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const ids = res.data.data.map((item: any) => item.movieId.toString());
+        setAddedMovieIds(new Set(ids));
+      } catch (err) {
+        console.error('Failed to fetch watchlist:', err);
+      }
+    };
+
+    fetchWatchlist();
+  }, [token]);
+
+  // Add to watchlist
+  const handleAdd = async (movie: WatchlistMovie) => {
     try {
-      console.log('Token being sent', token);
-      const result = await addToWatchlist(movie, token);
-      setAddedMovieIds((prev) => new Set(prev).add(movie.id)); 
-      console.log("Token", token);
+      await addToWatchlist(movie, token);
+      setAddedMovieIds((prev) => new Set(prev).add(movie.id));
       alert('Added to Watchlist');
-    } catch (e: any) {
-      alert(e?.response?.data?.error || 'Already in Watchlist or failed');
+    } catch (err: any) {
+      alert(err?.response?.data?.error || 'Already in Watchlist or failed');
     }
   };
 
