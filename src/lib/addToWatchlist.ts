@@ -1,10 +1,13 @@
-import { useAuth } from "@/store/useAuth";
+import { WatchListMovie } from "@/types";
 import axios from "axios"
 
-export const addToWatchlist = async (movieId: string) => {
-    const { token } = useAuth();
+export const addToWatchlist = async (movie: WatchListMovie, token: string | null) => {
     try {
-        const res = await axios.post('api/watchlist', { movieId }, {
+        const res = await axios.post('api/watchlist', {
+            movieId: movie.id,
+            title: movie.title,
+            posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+         }, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

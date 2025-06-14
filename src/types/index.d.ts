@@ -10,3 +10,9 @@ export interface AuthState {
     setUser: (user: User | null, token: string) => void
     logout: () => void
 }
+
+export interface WatchListMovie {
+    id: string;
+    title: string;
+    poster_path: string;
+}
