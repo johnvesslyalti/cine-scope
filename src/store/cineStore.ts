@@ -26,9 +26,6 @@ type CineStore = {
   setTrending: (movies: Movie[]) => void;
   setLoading: (loading: boolean) => void;
   resetSearch: () => void;
-
-  addToWatchlist: (movie: Movie) => void;
-  removeFromWatchlist: (movieId: number) => void;
 };
 
 export const useCineStore = create<CineStore>()(
@@ -47,17 +44,6 @@ export const useCineStore = create<CineStore>()(
       setTrending: (movies) => set({ trending: movies }),
       setLoading: (loading) => set({ isLoading: loading }),
       resetSearch: () => set({ searchResults: [] }),
-
-      addToWatchlist: (movie) => {
-        const current = get().watchlist;
-        if (!current.find((m) => m.id === movie.id)) {
-          set({ watchlist: [...current, movie] });
-        }
-      },
-      removeFromWatchlist: (movieId) => {
-        const filtered = get().watchlist.filter((m) => m.id !== movieId);
-        set({ watchlist: filtered });
-      },
     }),
     {
       name: "cine-scope-storage", 

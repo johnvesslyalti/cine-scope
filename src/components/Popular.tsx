@@ -7,13 +7,14 @@ import Link from 'next/link';
 import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import Image from 'next/image';
+import { addToWatchlist } from '@/lib/addToWatchlist';
 
 export default function Popular() {
   const [popular, setPopular] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const { watchlist, addToWatchlist, removeFromWatchlist } = useCineStore();
+  const { watchlist } = useCineStore();
 
   useEffect(() => {
     const fetchPopular = async () => {
@@ -36,10 +37,14 @@ export default function Popular() {
     return watchlist.some((movie: Movie) => movie.id === movieId);
   };
 
-  const toggleWatchlist = (movie: Movie) => {
-    isInWatchlist(movie.id)
-      ? removeFromWatchlist(movie.id)
-      : addToWatchlist(movie);
+  const handleAdd = async (id: string) => {
+    try {
+      const result = await addToWatchlist(id);
+      console.log("Added to watchlist:", result);
+  
+    } catch (e) {
+      console.error('Already in Watchlist or failed');
+    }
   };
 
   if (loading) return <p className="text-white px-6">Loading...</p>;
@@ -58,7 +63,7 @@ export default function Popular() {
             <button
               aria-label={isInWatchlist(movie.id) ? "Remove from watchlist" : "Add to watchlist"}
               className="absolute top-2 right-2 z-10 text-white bg-black/60 p-1 rounded-full hover:bg-white/80 hover:text-black transition"
-              onClick={() => toggleWatchlist(movie)}
+              onClick={() => handleAdd(movie.id.toString())}
             >
               {isInWatchlist(movie.id) ? <FaBookmark /> : <FaRegBookmark />}
             </button>
