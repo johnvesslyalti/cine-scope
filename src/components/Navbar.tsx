@@ -31,7 +31,7 @@ export default function Navbar() {
             {/* Top Navbar */}
             <header className="w-full sticky top-0 z-30 bg-black/90 backdrop-blur-md shadow-sm border-b border-zinc-800">
                 <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 md:px-8 text-white">
-                    <div className="text-2xl font-semibold tracking-wide text-white">🎬 Cine Scope</div>
+                    <Link href="/"><div className="text-2xl font-semibold tracking-wide text-white">🎬 Cine Scope</div></Link>
 
                     {/* Hamburger Icon */}
                     <button
