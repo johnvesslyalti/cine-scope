@@ -4,15 +4,22 @@ import { useState } from "react";
 import { useAuth } from "@/store/useAuth";
 import { RxCross1, RxHamburgerMenu } from "react-icons/rx";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { navLinks } from "@/constants/NavLinks";
+import { Button } from "./ui/button";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const router = useRouter();
 
     const toggleMenu = () => setMenuOpen(prev => !prev);
 
-    // Filter links based on auth state
+    const handleLogout = () => {
+        logout();
+        router.push('/login'); // Redirect after logout
+    };
+
     const filteredLinks = navLinks.filter(link => {
         if (user && link.guestOnly) return false;
         if (!user && link.authRequired) return false;
@@ -32,12 +39,20 @@ export default function Navbar() {
                 </button>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex space-x-8 text-lg">
+                <div className="hidden md:flex space-x-8 text-lg items-center">
                     {filteredLinks.map(link => (
                         <Link key={link.label} href={link.path}>
                             <button className="cursor-pointer">{link.label}</button>
                         </Link>
                     ))}
+                    {user && (
+                        <Button
+                            onClick={handleLogout}
+                            className="cursor-pointer"
+                        >
+                            Logout
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -53,6 +68,17 @@ export default function Navbar() {
                                 <button className="text-2xl">{link.label}</button>
                             </Link>
                         ))}
+                        {user && (
+                            <button
+                                onClick={() => {
+                                    handleLogout();
+                                    toggleMenu();
+                                }}
+                                className="text-2xl text-red-400 hover:underline"
+                            >
+                                Logout
+                            </button>
+                        )}
                     </div>
                 </div>
             )}

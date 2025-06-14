@@ -1,17 +1,31 @@
-import { AuthState } from "@/types";
-import { create } from "zustand";
+import { AuthState } from '@/types'
+import { create } from 'zustand'
+import { persist, StorageValue } from 'zustand/middleware'
 
-export const useAuth = create<AuthState>((set) => ({
-    user: null,
-    token: null,
-    setUser: (user, token) => {
-        localStorage.setItem("user", JSON.stringify(user))
-        localStorage.setItem("token", token)
-        set({ user, token })
-    },
-    logout: () => {
-        localStorage.removeItem("user")
-        localStorage.removeItem("token")
-        set({ user: null, token: null })
+const customStorage = {
+  getItem: (name: string): StorageValue<AuthState> | null => {
+    const item = localStorage.getItem(name)
+    return item ? JSON.parse(item) : null
+  },
+  setItem: (name: string, value: StorageValue<AuthState>) => {
+    localStorage.setItem(name, JSON.stringify(value))
+  },
+  removeItem: (name: string) => {
+    localStorage.removeItem(name)
+  },
+}
+
+export const useAuth = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      setUser: (user, token) => set({ user, token }),
+      logout: () => set({ user: null, token: null }),
+    }),
+    {
+      name: 'cine-scope-auth',
+      storage: customStorage, 
     }
-}))
+  )
+)

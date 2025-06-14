@@ -1,49 +1,44 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import {
-  useKeenSlider,
-  KeenSliderOptions,
-} from 'keen-slider/react'
+import { useEffect, useRef } from 'react';
+import { useKeenSlider, KeenSliderOptions } from 'keen-slider/react';
 
 export const useAutoSlider = (options: KeenSliderOptions = {}) => {
-  const [isSliderReady, setSliderReady] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [sliderRef, sliderInstanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
     slides: { perView: 1 },
     ...options,
-    created() {
-      setSliderReady(true)
-    },
-  })
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    let timeout: NodeJS.Timeout
-
-    const startAutoSlide = () => {
-      const slider = sliderInstanceRef.current
-      if (!slider) return
-
-      interval = setInterval(() => {
+    created(slider) {
+      // Start auto-slide as soon as the slider is ready
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
         try {
-          slider.next()
+          slider.next();
         } catch (err) {
-          console.error("Error while sliding:", err)
+          console.error('Error during auto-slide:', err);
         }
-      }, 3000)
-    }
+      }, 3000);
+    },
+    destroyed() {
+      // Cleanup on unmount
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    },
+  });
 
-    if (isSliderReady) {
-      timeout = setTimeout(startAutoSlide, 300) // slight delay for stability
-    }
-
+  // Extra cleanup just in case
+  useEffect(() => {
     return () => {
-      clearInterval(interval)
-      clearTimeout(timeout)
-    }
-  }, [isSliderReady, sliderInstanceRef]) // depend on readiness
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
-  return { sliderRef, sliderInstanceRef }
-}
+  return { sliderRef, sliderInstanceRef };
+};
