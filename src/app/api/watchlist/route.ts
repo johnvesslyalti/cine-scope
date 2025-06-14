@@ -62,3 +62,31 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const user = await getUserFromRequest(req);
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { movieId } = await req.json();
+
+    const deleted = await prisma.watchlist.deleteMany({
+      where: {
+        userId: user.id,
+        movieId,
+      },
+    });
+
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: 'Movie not found in watchlist' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Removed from watchlist' });
+  } catch (error) {
+    console.error('Error deleting from watchlist:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

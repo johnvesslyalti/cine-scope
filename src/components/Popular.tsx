@@ -7,10 +7,9 @@ import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
-import { addToWatchlist } from '@/lib/addToWatchlist';
+import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
 
-// Define a light type for watchlist
 type WatchlistMovie = {
   id: string;
   title: string;
@@ -24,6 +23,7 @@ export default function Popular() {
   const [error, setError] = useState(false);
   const { token } = useAuth();
 
+  // Fetch popular movies
   useEffect(() => {
     const fetchPopular = async () => {
       try {
@@ -40,7 +40,7 @@ export default function Popular() {
     fetchPopular();
   }, []);
 
-  // Sync watchlist bookmark status
+  // Fetch current watchlist
   useEffect(() => {
     const fetchWatchlist = async () => {
       if (!token) return;
@@ -62,14 +62,30 @@ export default function Popular() {
     fetchWatchlist();
   }, [token]);
 
-  // Add to watchlist
-  const handleAdd = async (movie: WatchlistMovie) => {
-    try {
-      await addToWatchlist(movie, token);
-      setAddedMovieIds((prev) => new Set(prev).add(movie.id));
-      alert('Added to Watchlist');
-    } catch (err: any) {
-      alert(err?.response?.data?.error || 'Already in Watchlist or failed');
+  // Toggle watchlist
+  const handleToggleWatchlist = async (movie: WatchlistMovie) => {
+    const movieId = movie.id;
+
+    if (addedMovieIds.has(movieId)) {
+      try {
+        await deleteFromWatchlist(movieId, token);
+        setAddedMovieIds(prev => {
+          const updated = new Set(prev);
+          updated.delete(movieId);
+          return updated;
+        });
+        alert('Removed from Watchlist');
+      } catch (err: any) {
+        alert(err?.response?.data?.error || 'Failed to remove');
+      }
+    } else {
+      try {
+        await addToWatchlist(movie, token);
+        setAddedMovieIds(prev => new Set(prev).add(movieId));
+        alert('Added to Watchlist');
+      } catch (err: any) {
+        alert(err?.response?.data?.error || 'Failed to add');
+      }
     }
   };
 
@@ -96,14 +112,13 @@ export default function Popular() {
                     : 'bg-black/60 text-white hover:bg-white/80 hover:text-black'
                 }`}
                 onClick={() =>
-                  handleAdd({
+                  handleToggleWatchlist({
                     id: movie.id.toString(),
                     title: movie.title,
                     poster_path: movie.poster_path,
                   })
                 }
-                disabled={isAdded}
-                title={isAdded ? 'Already in Watchlist' : 'Add to Watchlist'}
+                title={isAdded ? 'Remove from Watchlist' : 'Add to Watchlist'}
               >
                 {isAdded ? <FaBookmark /> : <FaRegBookmark />}
               </button>
