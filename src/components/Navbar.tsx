@@ -17,7 +17,7 @@ export default function Navbar() {
 
     const handleLogout = () => {
         logout();
-        router.push('/login'); // Redirect after logout
+        router.push('/login');
     };
 
     const filteredLinks = navLinks.filter(link => {
@@ -29,43 +29,50 @@ export default function Navbar() {
     return (
         <>
             {/* Top Navbar */}
-            <div className="flex items-center justify-between px-4 py-3 md:px-8 bg-black text-white z-20 relative">
-                <div className="text-xl font-bold">Cine Scope</div>
-                <button
-                    className="text-2xl font-bold md:hidden focus:outline-none"
-                    onClick={toggleMenu}
-                >
-                    {menuOpen ? <RxCross1 /> : <RxHamburgerMenu />}
-                </button>
+            <header className="w-full sticky top-0 z-30 bg-black/90 backdrop-blur-md shadow-sm border-b border-zinc-800">
+                <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 md:px-8 text-white">
+                    <div className="text-2xl font-semibold tracking-wide text-white">🎬 Cine Scope</div>
 
-                {/* Desktop Navigation */}
-                <div className="hidden md:flex space-x-8 text-lg items-center">
-                    {filteredLinks.map(link => (
-                        <Link key={link.label} href={link.path}>
-                            <button className="cursor-pointer">{link.label}</button>
-                        </Link>
-                    ))}
-                    {user && (
-                        <Button
-                            onClick={handleLogout}
-                            className="cursor-pointer"
-                        >
-                            Logout
-                        </Button>
-                    )}
+                    {/* Hamburger Icon */}
+                    <button
+                        className="text-2xl font-bold md:hidden focus:outline-none"
+                        onClick={toggleMenu}
+                    >
+                        {menuOpen ? <RxCross1 /> : <RxHamburgerMenu />}
+                    </button>
+
+                    {/* Desktop Nav Links */}
+                    <nav className="hidden md:flex space-x-6 text-base items-center">
+                        {filteredLinks.map(link => (
+                            <Link key={link.label} href={link.path}>
+                                <span className="hover:text-cyan-400 transition-colors duration-200 cursor-pointer">
+                                    {link.label}
+                                </span>
+                            </Link>
+                        ))}
+                        {user && (
+                            <Button
+                                onClick={handleLogout}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 text-sm rounded-xl shadow transition"
+                            >
+                                Logout
+                            </Button>
+                        )}
+                    </nav>
                 </div>
-            </div>
+            </header>
 
-            {/* Mobile Overlay Menu */}
+            {/* Mobile Overlay */}
             {menuOpen && (
-                <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-95 text-white flex flex-col items-center justify-center gap-6 z-50 md:hidden">
-                    <button onClick={toggleMenu} className="absolute top-4 right-4 text-3xl">
+                <div className="fixed inset-0 bg-black/95 text-white flex flex-col items-center justify-center gap-8 z-50 transition-all duration-300">
+                    <button onClick={toggleMenu} className="absolute top-5 right-5 text-3xl text-gray-300 hover:text-white">
                         <RxCross1 />
                     </button>
-                    <div className="flex flex-col items-center gap-6">
+
+                    <nav className="flex flex-col items-center gap-6 text-xl">
                         {filteredLinks.map(link => (
                             <Link key={link.label} href={link.path} onClick={toggleMenu}>
-                                <button className="text-2xl">{link.label}</button>
+                                <span className="hover:text-cyan-400 transition">{link.label}</span>
                             </Link>
                         ))}
                         {user && (
@@ -74,12 +81,12 @@ export default function Navbar() {
                                     handleLogout();
                                     toggleMenu();
                                 }}
-                                className="text-2xl text-red-400 hover:underline"
+                                className="text-red-400 hover:text-red-500 transition text-xl"
                             >
                                 Logout
                             </button>
                         )}
-                    </div>
+                    </nav>
                 </div>
             )}
         </>

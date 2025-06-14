@@ -1,44 +1,49 @@
 export default function Footer() {
     return (
-        <footer className="bg-zinc-900 text-gray-300 py-10 mt-20">
-            <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <footer className="bg-zinc-950 text-gray-400 pt-12 pb-8 mt-24">
+            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+                {/* Brand Description */}
                 <div>
-                    <h2 className="text-lg font-semibold mb-4">Cine Scope</h2>
-                    <p className="text-sm">
-                        Your ultimate movie discovery platform. Explore, rate, and review.
+                    <h2 className="text-xl font-bold text-white mb-4">🎬 Cine Scope</h2>
+                    <p className="text-sm leading-relaxed text-zinc-400">
+                        Your ultimate movie discovery platform. Explore trending titles, rate your favorites, and stay in the loop.
                     </p>
                 </div>
 
+                {/* Quick Links */}
                 <div>
-                    <h3 className="text-md font-semibold mb-4">Quick Links</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
                     <ul className="space-y-2 text-sm">
-                        <li><a href="#" className="hover:underline">Home</a></li>
-                        <li><a href="#" className="hover:underline">Movies</a></li>
-                        <li><a href="#" className="hover:underline">TV Shows</a></li>
-                        <li><a href="#" className="hover:underline">Top Rated</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Movies</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">TV Shows</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Top Rated</a></li>
                     </ul>
                 </div>
 
+                {/* Legal */}
                 <div>
-                    <h3 className="text-md font-semibold mb-4">Legal</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
                     <ul className="space-y-2 text-sm">
-                        <li><a href="#" className="hover:underline">Privacy Policy</a></li>
-                        <li><a href="#" className="hover:underline">Terms of Service</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
                     </ul>
                 </div>
 
+                {/* Connect */}
                 <div>
-                    <h3 className="text-md font-semibold mb-4">Connect</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Connect</h3>
                     <ul className="space-y-2 text-sm">
-                        <li><a href="#" className="hover:underline">Instagram</a></li>
-                        <li><a href="#" className="hover:underline">Twitter</a></li>
-                        <li><a href="#" className="hover:underline">GitHub</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Instagram</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Twitter</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">GitHub</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div className="border-t border-zinc-700 mt-10 pt-6 text-center text-sm text-gray-500">
-                &copy; {new Date().getFullYear()} Cine Scope. All rights reserved.
+            {/* Divider and Copyright */}
+            <div className="border-t border-zinc-800 mt-12 pt-6 text-center text-xs text-zinc-500">
+                &copy; {new Date().getFullYear()} <span className="font-semibold text-white">Cine Scope</span>. All rights reserved.
             </div>
         </footer>
     );

@@ -2,7 +2,7 @@
 
 import { useAutoSlider } from "@/hooks/useAutoSlider";
 import { useCineStore } from "@/store/cineStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import "keen-slider/keen-slider.min.css";
 import { TMDB_API } from "@/lib/tmdb";
@@ -10,55 +10,76 @@ import { TMDB_API } from "@/lib/tmdb";
 export default function TrendingCarousel() {
   const { trending, setTrending } = useCineStore();
   const { sliderRef } = useAutoSlider();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTrendingMovies = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(TMDB_API.trending);
         const movies = res.data.results.slice(0, 10);
         setTrending(movies);
       } catch (err) {
         console.error("Failed to fetch trending movies:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchTrendingMovies();
-  }, []);
+  }, [setTrending]);
 
   return (
-    <section className="px-6 py-4">
-      <h2 className="text-2xl font-semibold mb-4 text-white">Trending Today</h2>
-      <div
-        ref={sliderRef}
-        className="keen-slider h-[400px] relative rounded-xl overflow-hidden"
-      >
-        {trending.map((movie, index) => (
-          <div
-            key={movie.id}
-            className="keen-slider__slide relative px-2"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg group">
-              <img
-                src={
-                  movie.poster_path
-                    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                    : "/fallback.jpg"
-                }
-                alt={movie.title || movie.name || "Untitled"}
-                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+    <section className="px-6 py-6 md:py-10">
+      <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+        🎞️ Trending Today
+      </h2>
+
+      <div ref={sliderRef} className="keen-slider h-[400px] rounded-xl overflow-hidden">
+        {trending.map((movie, index) => {
+          const backgroundImg = movie.poster_path
+            ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+            : "/fallback-bg.jpg";
+
+          const posterImg = movie.poster_path
+            ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
+            : "/fallback.jpg";
+
+          return (
+            <div key={movie.id} className="keen-slider__slide relative">
+              {/* Background image with overlay */}
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${backgroundImg})`,
+                  filter: "brightness(0.5)",
+                }}
               />
-              {/* Overlay */}
-              <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent px-4 py-4 flex items-end justify-between text-white">
-                <h3 className="text-lg font-semibold truncate max-w-[80%]">
-                  {movie.title || movie.name || "Untitled"}
-                </h3>
-                <span className="text-lg font-bold bg-red-600 px-3 py-1 rounded-full shadow-md">
-                  {index + 1}
-                </span>
+              <div className="absolute inset-0 bg-black/60" />
+
+              {/* Foreground content */}
+              <div className="relative z-10 flex items-end h-full p-6 gap-6">
+                <img
+                  src={posterImg}
+                  alt={movie.title || movie.name}
+                  className="w-32 md:w-40 rounded-xl shadow-xl object-cover"
+                  loading="lazy"
+                />
+                <div className="text-white">
+                  <h3 className="text-xl md:text-2xl font-bold">
+                    {movie.title || movie.name || "Untitled"}
+                  </h3>
+                  <p className="mt-2 text-sm md:text-base text-white/80 max-w-lg line-clamp-3">
+                    {movie.overview || "No description available."}
+                  </p>
+                  <span className="mt-3 inline-block bg-red-600 px-3 py-1 text-sm font-semibold rounded-full shadow">
+                    #{index + 1}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
