@@ -8,7 +8,7 @@ if (!API_KEY) {
 export const TMDB_API = {
   trending: `${BASE_URL}/trending/all/day?api_key=${API_KEY}`,
   top_rated: `${BASE_URL}/movie/top_rated?api_key=${API_KEY}`,
-  popular: (page = 1) => `${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`,
+  popular: `${BASE_URL}/movie/popular?api_key=${API_KEY}`,
   upcoming: `${BASE_URL}/movie/upcoming?api_key=${API_KEY}`,
   nowplaying: `${BASE_URL}/movie/now_playing?api_key=${API_KEY}`,
 
