@@ -50,13 +50,19 @@ export default function Watchlist() {
       setTimeout(() => {
         setAlertMessage(null);
       }, 3000)
-    } catch (err: any) {
-      console.error('Failed to remove from watchlist:', err);
-      setAlertMessage(err?.response?.data?.error || 'Failed to remove');
-      setTimeout(() => {
+    } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+        console.error('Failed to remove from watchlist:', err);
+        setAlertMessage(err.response?.data?.error || 'Failed to remove');
+        } else {
+        console.error('Unexpected error:', err);
+        setAlertMessage('Failed to remove');
+        }
+
+        setTimeout(() => {
         setAlertMessage(null);
-      }, 3000)
-    }
+        }, 3000);
+        }
   };
 
   return (

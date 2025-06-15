@@ -6,7 +6,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/store/useAuth";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -34,9 +34,10 @@ export default function Login() {
       setMessage("Login Successful 🎉");
 
       setTimeout(() => router.push("/"), 1000); // Redirect after success
-    } catch (err: any) {
-      console.error(err?.response?.data?.message || "Login failed");
-      setError(err?.response?.data?.message || "Invalid credentials");
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      console.error(error.response?.data?.message || "Login failed");
+      setError(error.response?.data?.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }

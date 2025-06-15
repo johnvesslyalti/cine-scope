@@ -26,8 +26,12 @@ export default function Popular() {
       try {
         const res = await axios.get(TMDB_API.popular);
         setPopular(res.data.results);
-      } catch (err) {
-        console.error('Failed to fetch popular movies:', err);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          console.error('Failed to fetch popular movies:', err.message);
+        } else {
+          console.error('Unknown error while fetching popular movies');
+        }
         setError(true);
       } finally {
         setLoading(false);
@@ -49,10 +53,14 @@ export default function Popular() {
           },
         });
 
-        const ids = res.data.data.map((item: any) => item.movieId.toString());
+        const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
         setAddedMovieIds(new Set(ids));
-      } catch (err) {
-        console.error('Failed to fetch watchlist:', err);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          console.error('Failed to fetch watchlist:', err.message);
+        } else {
+          console.error('Unknown error while fetching watchlist');
+        }
       }
     };
 
@@ -72,22 +80,26 @@ export default function Popular() {
           return updated;
         });
         setAlertMessage('Removed from Watchlist');
-        setTimeout(() => {
-          setAlertMessage(null);
-        }, 3000);
-      } catch (err: any) {
-        setAlertMessage(err?.response?.data?.error || 'Failed to remove');
+        setTimeout(() => setAlertMessage(null), 3000);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setAlertMessage(err.response?.data?.error || 'Failed to remove');
+        } else {
+          setAlertMessage('Unknown error while removing');
+        }
       }
     } else {
       try {
         await addToWatchlist(movie, token);
         setAddedMovieIds(prev => new Set(prev).add(movieId));
         setAlertMessage('Added to Watchlist');
-        setTimeout(() => {
-          setAlertMessage(null);
-        }, 3000)
-      } catch (err: any) {
-        alert(err?.response?.data?.error || 'Failed to add');
+        setTimeout(() => setAlertMessage(null), 3000);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          alert(err.response?.data?.error || 'Failed to add');
+        } else {
+          alert('Unknown error while adding');
+        }
       }
     }
   };

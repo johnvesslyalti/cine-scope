@@ -2,27 +2,24 @@
 
 import { useAutoSlider } from "@/hooks/useAutoSlider";
 import { useCineStore } from "@/store/cineStore";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import axios from "axios";
 import "keen-slider/keen-slider.min.css";
 import { TMDB_API } from "@/lib/tmdb";
+import Image from "next/image";
 
 export default function TrendingCarousel() {
   const { trending, setTrending } = useCineStore();
   const { sliderRef } = useAutoSlider();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTrendingMovies = async () => {
       try {
-        setLoading(true);
         const res = await axios.get(TMDB_API.trending);
         const movies = res.data.results.slice(0, 10);
         setTrending(movies);
       } catch (err) {
         console.error("Failed to fetch trending movies:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -59,12 +56,17 @@ export default function TrendingCarousel() {
 
               {/* Foreground content */}
               <div className="relative z-10 flex items-end h-full p-6 gap-6">
-                <img
-                  src={posterImg}
-                  alt={movie.title || movie.name}
-                  className="w-32 md:w-40 rounded-xl shadow-xl object-cover"
-                  loading="lazy"
-                />
+                <div className="relative w-32 md:w-40 h-[190px] md:h-[240px] rounded-xl overflow-hidden shadow-xl">
+                  <Image
+                    src={posterImg}
+                    alt={movie.title || movie.name || "Untitled"}
+                    fill
+                    className="object-cover rounded-xl"
+                    sizes="(max-width: 768px) 128px, 160px"
+                    priority={index === 0}
+                  />
+                </div>
+
                 <div className="text-white">
                   <h3 className="text-xl md:text-2xl font-bold">
                     {movie.title || movie.name || "Untitled"}

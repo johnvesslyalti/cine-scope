@@ -29,6 +29,7 @@ export async function Get(req: Request) {
         }
 
     } catch (error) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+        console.error('Token verification failed:', error);
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });    
+}
 }

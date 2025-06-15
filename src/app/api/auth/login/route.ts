@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid data"}, { status: 400 });
     }
 
-    const { email, password } = parsed.data;
+    const { email } = parsed.data;
 
     const user = await prisma.user.findUnique({
         where: {email},

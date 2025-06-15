@@ -30,7 +30,7 @@ type CineStore = {
 
 export const useCineStore = create<CineStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       popularMovies: [],
       searchResults: [],
       selectedMovie: null,

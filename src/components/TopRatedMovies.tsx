@@ -12,6 +12,10 @@ import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { Alert, AlertDescription } from './ui/alert';
 import Image from 'next/image';
 
+interface WatchlistResponse {
+  data: { movieId: string }[];
+}
+
 export default function TopRatedMovies() {
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
@@ -25,8 +29,12 @@ export default function TopRatedMovies() {
       try {
         const res = await axios.get(TMDB_API.top_rated);
         setTopRated(res.data.results);
-      } catch (error) {
-        console.error("Failed to fetch top rated movies:", error);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          console.error('Failed to fetch top rated movies:', err.message);
+        } else {
+          console.error('Unknown error fetching top rated movies');
+        }
         setError(true);
       } finally {
         setLoading(false);
@@ -41,16 +49,20 @@ export default function TopRatedMovies() {
       if (!token) return;
 
       try {
-        const res = await axios.get('/api/watchlist', {
+        const res = await axios.get<WatchlistResponse>('/api/watchlist', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const ids = res.data.data.map((item: any) => item.movieId.toString());
+        const ids = res.data.data.map((item) => item.movieId.toString());
         setAddedMovieIds(new Set(ids));
-      } catch (error) {
-        console.error('Failed to fetch watchlist', error);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          console.error('Failed to fetch watchlist:', err.message);
+        } else {
+          console.error('Unknown error fetching watchlist');
+        }
       }
     };
 
@@ -68,28 +80,33 @@ export default function TopRatedMovies() {
           updated.delete(movieId);
           return updated;
         });
-        setAlertMessage("Removed from Watchlist");
+        setAlertMessage('Removed from Watchlist');
         setTimeout(() => setAlertMessage(null), 3000);
-      } catch (error: any) {
-        setAlertMessage(error?.response?.data?.error || 'Failed to remove');
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setAlertMessage(err.response?.data?.error || 'Failed to remove');
+        } else {
+          setAlertMessage('Unknown error while removing');
+        }
       }
     } else {
       try {
         await addToWatchlist(movie, token);
         setAddedMovieIds((prev) => new Set(prev).add(movieId));
-        setAlertMessage("Added to Watchlist");
+        setAlertMessage('Added to Watchlist');
         setTimeout(() => setAlertMessage(null), 3000);
-      } catch (error: any) {
-        setAlertMessage(error?.response?.data?.error || 'Failed to add');
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setAlertMessage(err.response?.data?.error || 'Failed to add');
+        } else {
+          setAlertMessage('Unknown error while adding');
+        }
       }
     }
   };
 
-  if (loading)
-    return <p className="text-white px-6">Loading...</p>;
-
-  if (error)
-    return <p className="text-red-500 px-6">Failed to load Top Rated Movies.</p>;
+  if (loading) return <p className="text-white px-6">Loading...</p>;
+  if (error) return <p className="text-red-500 px-6">Failed to load Top Rated Movies.</p>;
 
   return (
     <section className="px-6 py-8 bg-black">

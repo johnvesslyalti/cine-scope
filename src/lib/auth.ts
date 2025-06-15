@@ -1,5 +1,10 @@
 // lib/auth.ts
-import { verifyToken } from './jwt'; // use your own verifyToken function
+import { verifyToken } from './jwt';
+
+interface JwtPayload {
+  id: string;
+  email: string;
+}
 
 export async function getUserFromRequest(req: Request) {
   const authHeader = req.headers.get('authorization');
@@ -10,11 +15,10 @@ export async function getUserFromRequest(req: Request) {
   const token = authHeader.split(' ')[1];
 
   try {
-    const payload = verifyToken(token);
-    // assuming your payload contains id and email
+    const payload = verifyToken(token) as JwtPayload;
     return {
-      id: (payload as any).id,
-      email: (payload as any).email,
+      id: payload.id,
+      email: payload.email,
     };
   } catch (err) {
     console.error('Token verification failed', err);

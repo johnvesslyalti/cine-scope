@@ -49,7 +49,7 @@ export default function UpcomingReleases() {
           },
         });
 
-        const ids = res.data.data.map((item: any) => item.movieId.toString());
+        const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
         setAddedMovieIds(new Set(ids));
       } catch (err) {
         console.error('Failed to fetch watchlist:', err);
@@ -66,22 +66,34 @@ export default function UpcomingReleases() {
     if (addedMovieIds.has(movieId)) {
       try {
         await deleteFromWatchlist(movieId, token);
-        setAddedMovieIds(prev => {
+        setAddedMovieIds((prev) => {
           const updated = new Set(prev);
           updated.delete(movieId);
           return updated;
         });
         setAlertMessage('Removed from Watchlist');
-      } catch (err: any) {
-        setAlertMessage(err?.response?.data?.error || 'Failed to remove');
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setAlertMessage(err.response?.data?.error || 'Failed to remove');
+        } else if (err instanceof Error) {
+          setAlertMessage(err.message);
+        } else {
+          setAlertMessage('Failed to remove');
+        }
       }
     } else {
       try {
         await addToWatchlist(movie, token);
-        setAddedMovieIds(prev => new Set(prev).add(movieId));
+        setAddedMovieIds((prev) => new Set(prev).add(movieId));
         setAlertMessage('Added to Watchlist');
-      } catch (err: any) {
-        setAlertMessage(err?.response?.data?.error || 'Failed to add');
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setAlertMessage(err.response?.data?.error || 'Failed to add');
+        } else if (err instanceof Error) {
+          setAlertMessage(err.message);
+        } else {
+          setAlertMessage('Failed to add');
+        }
       }
     }
 

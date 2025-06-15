@@ -21,7 +21,7 @@ export default function Register() {
     setError(null);
 
     try {
-      const response = await axios.post("/api/auth/register", {
+      await axios.post("/api/auth/register", {
         name,
         email,
         password,
