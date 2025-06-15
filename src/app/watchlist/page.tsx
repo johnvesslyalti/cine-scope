@@ -6,9 +6,11 @@ import Image from 'next/image';
 import { useAuth } from '@/store/useAuth';
 import { FaTrash } from 'react-icons/fa';
 import { WatchlistItem } from '@/types';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Watchlist() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { token } = useAuth();
@@ -44,15 +46,26 @@ export default function Watchlist() {
       });
 
       setWatchlist((prev) => prev.filter((movie) => movie.movieId !== movieId));
-      alert('Removed from Watchlist');
+      setAlertMessage('Removed from Watchlist');
+      setTimeout(() => {
+        setAlertMessage(null);
+      }, 3000)
     } catch (err: any) {
       console.error('Failed to remove from watchlist:', err);
-      alert(err?.response?.data?.error || 'Failed to remove');
+      setAlertMessage(err?.response?.data?.error || 'Failed to remove');
+      setTimeout(() => {
+        setAlertMessage(null);
+      }, 3000)
     }
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white px-4 py-10">
+      {alertMessage && (
+        <Alert className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm rounded-xl border border-green-500 bg-green-900 text-green-200 shadow-xl transition-all duration-300">
+          <AlertDescription>{ alertMessage }</AlertDescription>
+        </Alert>
+      )}
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 border-b border-zinc-700 pb-2">
           Your Watchlist
