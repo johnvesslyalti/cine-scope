@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function Get(req: Request) {
+export async function GET(req: Request) {
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.split(' ')[1];
 
