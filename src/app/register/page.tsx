@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export default function Register() {
       {/* Success Alert */}
       {message && (
         <Alert className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm rounded-xl border border-green-500 bg-green-900 text-green-200 shadow-lg transition-all duration-300">
-          {message}
+          <AlertDescription>{message}</AlertDescription>
         </Alert>
       )}
 

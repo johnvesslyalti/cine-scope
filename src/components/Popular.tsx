@@ -9,16 +9,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
-
-type WatchlistMovie = {
-  id: string;
-  title: string;
-  poster_path: string;
-};
+import { Alert, AlertDescription } from './ui/alert';
+import { WatchlistMovie } from '@/types';
 
 export default function Popular() {
   const [popular, setPopular] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { token } = useAuth();
@@ -74,15 +71,21 @@ export default function Popular() {
           updated.delete(movieId);
           return updated;
         });
-        alert('Removed from Watchlist');
+        setAlertMessage('Removed from Watchlist');
+        setTimeout(() => {
+          setAlertMessage(null);
+        }, 3000);
       } catch (err: any) {
-        alert(err?.response?.data?.error || 'Failed to remove');
+        setAlertMessage(err?.response?.data?.error || 'Failed to remove');
       }
     } else {
       try {
         await addToWatchlist(movie, token);
         setAddedMovieIds(prev => new Set(prev).add(movieId));
-        alert('Added to Watchlist');
+        setAlertMessage('Added to Watchlist');
+        setTimeout(() => {
+          setAlertMessage(null);
+        }, 3000)
       } catch (err: any) {
         alert(err?.response?.data?.error || 'Failed to add');
       }
@@ -94,6 +97,11 @@ export default function Popular() {
 
   return (
     <section className="px-6 py-8 bg-black">
+      {alertMessage && (
+        <Alert className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm rounded-xl border border-green-500 bg-green-900 text-green-200 shadow-xl transition-all duration-300">
+          <AlertDescription>{alertMessage}</AlertDescription>
+        </Alert>
+      )}
       <h2 className="text-3xl font-bold mb-6 text-white">Popular Movies</h2>
 
       <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory">

@@ -18,3 +18,9 @@ interface WatchlistItem {
   posterUrl: string;
   createdAt: string;
 }
+
+type WatchlistMovie = {
+  id: string;
+  title: string;
+  poster_path: string;
+};
