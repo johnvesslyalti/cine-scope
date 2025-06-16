@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Movie {
   id: number;
@@ -19,16 +20,28 @@ export default function SearchPage() {
   const query = searchParams.get('q') || '';
 
   useEffect(() => {
-    if (!query) return;
+  if (!query) return;
 
-    setLoading(true);
-    fetch(`/api/search?query=${encodeURIComponent(query)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setResults(data);
-        setLoading(false);
-      });
-  }, [query]);
+  setLoading(true);
+  fetch(`/api/search?query=${encodeURIComponent(query)}`)
+    .then(async (res) => {
+      const text = await res.text();
+
+      try {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          setResults(data);
+        } else {
+          console.error('Unexpected JSON structure:', data);
+          setResults([]);
+        }
+      } catch (err) {
+        console.error('Failed to parse JSON:', text);
+        setResults([]);
+      }
+    })
+    .finally(() => setLoading(false));
+}, [query]);
 
   return (
     <div className="p-6">
@@ -42,6 +55,7 @@ export default function SearchPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {results.map((movie) => (
             <div key={movie.id} className="rounded overflow-hidden shadow hover:scale-105 transition">
+              <Link href={`movie/${movie.id}`}>
               {movie.poster_path ? (
                 <Image
                   src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
@@ -59,6 +73,7 @@ export default function SearchPage() {
                 <h2 className="font-semibold">{movie.title}</h2>
                 <p className="text-sm text-gray-500">{movie.release_date}</p>
               </div>
+              </Link>
             </div>
           ))}
         </div>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { navLinks } from "@/constants/NavLinks";
 import { Button } from "./ui/button";
+import SearchInput from "./SearchInput";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function Navbar() {
                 <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 md:px-8 text-white">
                     <Link href="/"><div className="text-2xl font-semibold tracking-wide text-white">🎬 Cine Scope</div></Link>
 
+                    <SearchInput />
                     {/* Hamburger Icon */}
                     <button
                         className="text-2xl font-bold md:hidden focus:outline-none"
