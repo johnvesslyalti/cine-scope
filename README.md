@@ -38,65 +38,57 @@ Installation:
 Folder Structure:
 
     cine-scope/
-            │
-            ├── prisma/
-            │   ├── schema.prisma
-            │   └── seed.ts                  # Optional: for dev/test data
-            │
-            ├── public/                      # Public assets like images
-            │
-            ├── src/
-            │   ├── app/                     # Next.js App Router
-            │   │   ├── (auth)/              # Login/Register layout
-            │   │   ├── dashboard/           # Protected user dashboard
-            │   │   ├── movies/              # /movies route and details
-            │   │   │   ├── [movieId]/       # Movie details
-            │   │   │   └── page.tsx
-            │   │   ├── api/                 # Route handlers (Next.js API)
-            │   │   │   ├── auth/            # Auth APIs
-            │   │   │   ├── movies/          # Movie APIs (CRUD)
-            │   │   │   ├── reviews/         # Review APIs
-            │   │   │   ├── watchlist/       # Watchlist APIs
-            │   │   │   ├── favorites/       # Favorite APIs
-            │   │   │   └── users/           # Profile APIs
-            │   │   └── layout.tsx
-            │   │   └── page.tsx
-            │
-            │   ├── components/              # Reusable UI components
-            │   │   ├── layout/
-            │   │   ├── movie/
-            │   │   ├── buttons/
-            │   │   └── auth/
-            │
-            │   ├── constants/               # Static constants (genres, routes)
-            │
-            │   ├── db/                      # Prisma DB utils
-            │   │   └── index.ts             # Prisma client instance
-            │
-            │   ├── hooks/                   # Custom React hooks
-            │
-            │   ├── lib/                     # Server utilities
-            │   │   ├── auth.ts              # Auth middleware utils
-            │   │   ├── api.ts               # Axios wrapper for API requests
-            │   │   ├── middleware.ts        # Middleware functions
-            │   │   └── utils.ts             # Generic helpers
-            │
-            │   ├── middlewares/            # Next.js middlewares (auth, rate-limit)
-            │
-            │   ├── store/                   # Zustand stores or context
-            │
-            │   ├── types/                   # TypeScript types & interfaces
-            │   │   └── index.ts
-            │
-            │   ├── validation/              # Zod schemas
-            │   │   └── movie.schema.ts
-            │   │   └── user.schema.ts
-            │
-            │   └── styles/                  # Tailwind, global.css, or MUI theme
-            │       └── globals.css
-            │
-            ├── .env
-            ├── next.config.js
-            ├── tailwind.config.js
-            ├── tsconfig.json
-            └── package.json
+            |- prisma/
+            |- public/
+            |- src/
+                |- app/
+                    |- api/
+                        |- auth/
+                            |- login/
+                                |- route.ts
+                            |- register/
+                                |- route.ts
+                            |- users/
+                                |-me/
+                                    |- route.ts
+                        |- watchlist/
+                            |- route.ts
+                    |- login/
+                        |- page.tsx
+                    |- movie/
+                        |- page.tsx
+                    |- register/
+                        |- page.tsx
+                    |- watchlist/
+                        |- page.tsx
+                    |- globals.css
+                    |- layout.tsx
+                    |- page.tsx
+                |- components/
+                    |- ui/
+                    |- Footer.tsx
+                    |- Navbar.tsx
+                    |- NowPlayingMovies.tsx
+                    |- Popular.tsx
+                    |- ThemeProvider.tsx
+                    |- TopRatedMovies.tsx
+                    |- TrendingCorousel.tsx
+                    |- UpComingRelease.tsx
+                |- constants/
+                    |- Navlinks.ts
+                |- hooks/
+                    |- useAutoSlider.ts
+                |- lib/
+                    |- auth.ts
+                    |- jwt.ts
+                    |- prisma.ts
+                    |- tmdb.ts
+                    |- utils.ts
+                    |- watchlistAPI.ts
+                |- store/
+                    |- cineStore.ts
+                    |- useAuth.ts
+                |- types/
+                    |- index.d.ts
+                |- validation/
+                    |- auth.schema.ts
