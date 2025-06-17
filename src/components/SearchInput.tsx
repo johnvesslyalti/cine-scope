@@ -17,7 +17,7 @@ export default function SearchInput() {
   };
 
   return (
-    <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-md">
+    <form onSubmit={handleSearch} className="hidden gap-2 w-full max-w-md md:flex">
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
