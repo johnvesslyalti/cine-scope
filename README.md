@@ -8,7 +8,7 @@ Description:
 
 Demo:
 
-![Home Page Screenshot](/cine-scope-demo.png)
+![Home Page Screenshot](/public/cine-scope-demo.png)
 
 Features:
 
