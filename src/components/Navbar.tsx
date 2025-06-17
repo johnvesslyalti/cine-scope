@@ -34,7 +34,8 @@ export default function Navbar() {
                 <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 md:px-8 text-white">
                     <Link href="/"><div className="text-2xl font-semibold tracking-wide text-white">🎬 Cine Scope</div></Link>
 
-                    <SearchInput />
+                    <SearchInput className="hidden md:flex"/>
+
                     {/* Hamburger Icon */}
                     <button
                         className="text-2xl font-bold md:hidden focus:outline-none"
@@ -91,6 +92,9 @@ export default function Navbar() {
                     </nav>
                 </div>
             )}
+            <div className="p-5 md:hidden">
+                <SearchInput />
+            </div>
         </>
     );
 }

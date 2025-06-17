@@ -1,11 +1,15 @@
-// components/SearchInput.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input'; // Shadcn UI
+import { useState } from "react";
+import { Input } from "./ui/input";
+import { useRouter } from "next/navigation";
 
-export default function SearchInput() {
+interface SearchInputProps {
+  className?: string;
+  inputClassName?: string;
+}
+
+export default function SearchInput({ className = '', inputClassName = '' }: SearchInputProps) {
   const [query, setQuery] = useState('');
   const router = useRouter();
 
@@ -17,11 +21,12 @@ export default function SearchInput() {
   };
 
   return (
-    <form onSubmit={handleSearch} className="hidden gap-2 w-full max-w-md md:flex">
+    <form onSubmit={handleSearch} className={`flex gap-2 w-full max-w-md ${className}`}>
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search movies..."
+        className={inputClassName}
       />
     </form>
   );
