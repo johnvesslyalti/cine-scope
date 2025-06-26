@@ -153,3 +153,7 @@ Folder Structure:
                     |- index.d.ts
                 |- validation/
                     |- auth.schema.ts
+
+Contributing:
+
+    Contributions are welcome! Please fork the repo and submit a pull request.
