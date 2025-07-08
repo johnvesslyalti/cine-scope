@@ -1,88 +1,90 @@
-// app/search/SearchClient.tsx
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface Movie {
-  id: number
-  title: string
-  poster_path: string | null
-  release_date: string
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date: string;
 }
 
 export default function SearchClient() {
-  const [results, setResults] = useState<Movie[]>([])
-  const [loading, setLoading] = useState(false)
-  const searchParams = useSearchParams()
-  const query = searchParams.get('q') || ''
+  const [results, setResults] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") || "";
 
   useEffect(() => {
-    if (!query) return
+    if (!query) return;
 
-    setLoading(true)
+    setLoading(true);
     fetch(`/api/search?query=${encodeURIComponent(query)}`)
       .then(async (res) => {
-        const text = await res.text()
-
+        const text = await res.text();
         try {
-          const data = JSON.parse(text)
+          const data = JSON.parse(text);
           if (Array.isArray(data)) {
-            setResults(data)
+            setResults(data);
           } else {
-            console.error('Unexpected JSON structure:', data)
-            setResults([])
+            console.error("Unexpected JSON structure:", data);
+            setResults([]);
           }
         } catch {
-          console.error('Failed to parse JSON:', text)
-          setResults([])
+          console.error("Failed to parse JSON:", text);
+          setResults([]);
         }
       })
-      .finally(() => setLoading(false))
-  }, [query])
+      .finally(() => setLoading(false));
+  }, [query]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">
+    <div className="min-h-screen p-6 bg-gradient-to-b from-zinc-900 to-black text-white">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6">
         Search Results for &quot;{query}&quot;
       </h1>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center items-center h-60">
+          <p className="text-lg animate-pulse">Searching movies...</p>
+        </div>
       ) : results.length === 0 ? (
-        <p>No movies found.</p>
+        <div className="flex justify-center items-center h-60">
+          <p className="text-gray-400 text-lg">No movies found.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {results.map((movie) => (
-            <div
+            <Link
               key={movie.id}
-              className="rounded overflow-hidden shadow hover:scale-105 transition"
+              href={`/movie/${movie.id}`}
+              className="bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden transition-transform hover:scale-105 hover:shadow-lg border border-white/10"
             >
-              <Link href={`/movie/${movie.id}`}>
-                {movie.poster_path ? (
-                  <Image
-                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                    alt={movie.title}
-                    width={300}
-                    height={450}
-                    className="w-full h-auto"
-                  />
-                ) : (
-                  <div className="bg-gray-300 w-full h-[450px] flex items-center justify-center text-gray-600">
-                    No Image
-                  </div>
-                )}
-                <div className="p-2">
-                  <h2 className="font-semibold">{movie.title}</h2>
-                  <p className="text-sm text-gray-500">{movie.release_date}</p>
+              {movie.poster_path ? (
+                <Image
+                  src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                  alt={movie.title}
+                  width={300}
+                  height={450}
+                  className="w-full h-auto object-cover"
+                />
+              ) : (
+                <div className="w-full h-[450px] flex items-center justify-center bg-gray-700 text-white text-sm">
+                  No Image
                 </div>
-              </Link>
-            </div>
+              )}
+              <div className="p-3">
+                <h2 className="text-sm font-semibold truncate">
+                  {movie.title}
+                </h2>
+              </div>
+            </Link>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
