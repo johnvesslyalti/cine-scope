@@ -14,8 +14,6 @@ import {
 import { TMDB_API, TMDB_IMAGE } from '@/lib/tmdb';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
-import { IoIosArrowRoundBack } from "react-icons/io";
-import { useRouter } from 'next/navigation';
 
 // --- Types ---
 interface Genre {
@@ -45,7 +43,6 @@ export default function MovieDetails() {
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -108,8 +105,7 @@ export default function MovieDetails() {
 
   return (
     <div className="relative min-h-screen text-white">
-      <button onClick={() => router.back()} className='flex justify-center items-center text-xl gap-2 absolute top-5 left-5 cursor-pointer hover:text-sky-300'><span className='text-2xl'><IoIosArrowRoundBack /></span><p>Back</p></button>
-      {movie.backdrop_path && (
+        {movie.backdrop_path && (
         <div className="absolute inset-0 -z-10">
           <Image
             src={TMDB_IMAGE(movie.backdrop_path, 'w1280')}
