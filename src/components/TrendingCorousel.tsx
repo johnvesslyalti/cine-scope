@@ -7,10 +7,14 @@ import axios from "axios";
 import "keen-slider/keen-slider.min.css";
 import { TMDB_API } from "@/lib/tmdb";
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function TrendingCarousel() {
   const { trending, setTrending } = useCineStore();
-  const { sliderRef } = useAutoSlider();
+  const { sliderRef, sliderInstanceRef } = useAutoSlider({
+    slides: { perView: 1, spacing: 15 },
+  });
 
   useEffect(() => {
     const fetchTrendingMovies = async () => {
@@ -22,20 +26,39 @@ export default function TrendingCarousel() {
         console.error("Failed to fetch trending movies:", err);
       }
     };
-
     fetchTrendingMovies();
   }, [setTrending]);
 
-  return (
-    <section className="px-6 py-6 md:py-10">
-      <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-        🎞️ Trending Today
-      </h2>
+  const prevSlide = () => sliderInstanceRef.current?.prev();
+  const nextSlide = () => sliderInstanceRef.current?.next();
 
-      <div ref={sliderRef} className="keen-slider h-[400px] rounded-xl overflow-hidden">
+  return (
+    <section className="relative px-4 md:px-10 py-8 md:py-14 bg-gradient-to-b from-black/90 to-black">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+          🎞️ Trending Today
+        </h2>
+
+        <div className="flex gap-2">
+          <button
+            onClick={prevSlide}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition"
+          >
+            <ChevronLeft className="text-white" size={20} />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition"
+          >
+            <ChevronRight className="text-white" size={20} />
+          </button>
+        </div>
+      </div>
+
+      <div ref={sliderRef} className="keen-slider h-[420px] rounded-xl overflow-hidden">
         {trending.map((movie, index) => {
-          const backgroundImg = movie.poster_path
-            ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+          const backgroundImg = movie.backdrop_path
+            ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
             : "/fallback-bg.jpg";
 
           const posterImg = movie.poster_path
@@ -43,43 +66,49 @@ export default function TrendingCarousel() {
             : "/fallback.jpg";
 
           return (
-            <div key={movie.id} className="keen-slider__slide relative">
-              {/* Background image with overlay */}
+            <motion.div
+              key={movie.id}
+              className="keen-slider__slide relative group"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Background */}
               <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{
-                  backgroundImage: `url(${backgroundImg})`,
-                  filter: "brightness(0.5)",
-                }}
+                style={{ backgroundImage: `url(${backgroundImg})` }}
               />
-              <div className="absolute inset-0 bg-black/60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
               {/* Foreground content */}
-              <div className="relative z-10 flex items-end h-full p-6 gap-6">
-                <div className="relative w-32 md:w-40 h-[190px] md:h-[240px] rounded-xl overflow-hidden shadow-xl">
+              <div className="relative z-10 flex items-end h-full p-6 gap-6 max-w-6xl mx-auto">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="relative w-32 md:w-40 h-[190px] md:h-[240px] rounded-xl overflow-hidden shadow-xl shadow-black/50"
+                >
                   <Image
                     src={posterImg}
                     alt={movie.title || movie.name || "Untitled"}
                     fill
-                    className="object-cover rounded-xl"
+                    className="object-cover"
                     sizes="(max-width: 768px) 128px, 160px"
                     priority={index === 0}
                   />
-                </div>
+                </motion.div>
 
-                <div className="text-white">
-                  <h3 className="text-xl md:text-2xl font-bold">
+                <div className="text-white max-w-lg">
+                  <h3 className="text-2xl md:text-3xl font-bold leading-tight drop-shadow-md">
                     {movie.title || movie.name || "Untitled"}
                   </h3>
-                  <p className="mt-2 text-sm md:text-base text-white/80 max-w-lg line-clamp-3">
+                  <p className="mt-3 text-sm md:text-base text-white/80 line-clamp-3">
                     {movie.overview || "No description available."}
                   </p>
-                  <span className="mt-3 inline-block bg-red-600 px-3 py-1 text-sm font-semibold rounded-full shadow">
-                    #{index + 1}
+                  <span className="mt-4 inline-block bg-red-600 px-4 py-1 text-sm font-semibold rounded-full shadow-lg">
+                    #{index + 1} Trending
                   </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

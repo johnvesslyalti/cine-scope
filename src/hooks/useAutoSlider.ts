@@ -5,15 +5,18 @@ import { useKeenSlider, KeenSliderOptions } from 'keen-slider/react';
 
 export const useAutoSlider = (options: KeenSliderOptions = {}) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sliderAliveRef = useRef(true); // track if slider is alive
 
   const [sliderRef, sliderInstanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
     slides: { perView: 1 },
     ...options,
     created(slider) {
-      // Start auto-slide as soon as the slider is ready
+      sliderAliveRef.current = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
+
       intervalRef.current = setInterval(() => {
+        if (!sliderAliveRef.current) return; // guard against destroyed slider
         try {
           slider.next();
         } catch (err) {
@@ -22,7 +25,7 @@ export const useAutoSlider = (options: KeenSliderOptions = {}) => {
       }, 3000);
     },
     destroyed() {
-      // Cleanup on unmount
+      sliderAliveRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -30,9 +33,10 @@ export const useAutoSlider = (options: KeenSliderOptions = {}) => {
     },
   });
 
-  // Extra cleanup just in case
+  // Extra cleanup on unmount
   useEffect(() => {
     return () => {
+      sliderAliveRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
