@@ -9,12 +9,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
+import { useSession } from 'next-auth/react';
 import { Alert, AlertDescription } from './ui/alert';
 import { WatchlistMovie } from '@/types';
 import { motion } from 'framer-motion';
 
 export default function Popular() {
   const { user } = useAuth();
+  const { data: session, status } = useSession();
   const [popular, setPopular] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -39,8 +41,15 @@ export default function Popular() {
 
   // Fetch watchlist (only if logged in)
   useEffect(() => {
-
     const fetchWatchlist = async () => {
+      // Wait for session to be loaded
+      if (status === 'loading') return;
+      
+      // Check both Zustand user state and NextAuth session
+      if (!user || !session?.user) {
+        setAddedMovieIds(new Set()); // clear when user logs out / not present
+        return;
+      }
       try {
         const res = await axios.get('/api/watchlist');
         const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
@@ -48,10 +57,12 @@ export default function Popular() {
       } catch {}
     };
     fetchWatchlist();
-  }, []);
+  }, [user, session, status]);
 
   // Toggle watchlist
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
+    if (!user || !session?.user) return; // extra safety
+    
     const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
@@ -113,7 +124,7 @@ export default function Popular() {
               </Link>
 
               {/* Bookmark button (only show if logged in) */}
-              {user && (
+              {user && session?.user && (
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={() =>

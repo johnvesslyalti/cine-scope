@@ -8,12 +8,14 @@ import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark, FaStar } from 'react-icons/fa';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
+import { useSession } from 'next-auth/react';
 import { Movie } from '@/store/cineStore';
 import { Alert, AlertDescription } from './ui/alert';
 import { WatchlistMovie } from '@/types';
 
 export default function NowPlayingMovies() {
   const { user } = useAuth();
+  const { data: session, status } = useSession();
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -38,7 +40,15 @@ export default function NowPlayingMovies() {
 
   useEffect(() => {
     const fetchWatchlist = async () => {
-  
+      // Wait for session to be loaded
+      if (status === 'loading') return;
+      
+      // Check both Zustand user state and NextAuth session
+      if (!user || !session?.user) {
+        setAddedMovieIds(new Set()); // clear when user logs out / not present
+        return;
+      }
+      
       try {
         const res = await axios.get('/api/watchlist');
         const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
@@ -48,9 +58,11 @@ export default function NowPlayingMovies() {
       }
     };
     fetchWatchlist();
-  }, []);
+  }, [user, session, status]);
 
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
+    if (!user || !session?.user) return; // extra safety
+    
     const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
@@ -118,7 +130,7 @@ export default function NowPlayingMovies() {
                 className="relative min-w-[160px] max-w-[160px] hover:scale-105 transition-transform duration-300 snap-start group"
               >
                 {/* Watchlist button only if logged in */}
-                {user && (
+                {user && session?.user && (
                   <button
                     className={`absolute top-2 right-2 z-20 p-2 rounded-full shadow-md transition-transform transform hover:scale-110 ${
                       isAdded

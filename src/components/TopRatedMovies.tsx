@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark, FaStar } from 'react-icons/fa';
 import { useAuth } from '@/store/useAuth';
+import { useSession } from 'next-auth/react';
 import { WatchlistMovie } from '@/types';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { Alert, AlertDescription } from './ui/alert';
@@ -19,6 +20,7 @@ interface WatchlistResponse {
 
 export default function TopRatedMovies() {
   const { user } = useAuth();
+  const { data: session, status } = useSession();
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -41,17 +43,26 @@ export default function TopRatedMovies() {
   }, []);
 
   useEffect(() => {
-
     const fetchWatchList = async () => {
+      // Wait for session to be loaded
+      if (status === 'loading') return;
+      
+      // Check both Zustand user state and NextAuth session
+      if (!user || !session?.user) {
+        setAddedMovieIds(new Set()); // clear when user logs out / not present
+        return;
+      }
       try {
         const res = await axios.get<WatchlistResponse>('/api/watchlist');
         setAddedMovieIds(new Set(res.data.data.map((item) => item.movieId.toString())));
       } catch {}
     };
     fetchWatchList();
-  }, []);
+  }, [user, session, status]);
 
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
+    if (!user || !session?.user) return; // extra safety
+    
     const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
@@ -116,7 +127,7 @@ export default function TopRatedMovies() {
               </Link>
 
               {/* Bookmark button */}
-              {user && (
+              {user && session?.user && (
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={() =>
