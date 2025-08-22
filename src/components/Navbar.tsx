@@ -9,7 +9,11 @@ import { navLinks } from "@/constants/NavLinks";
 import { Button } from "./ui/button";
 import SearchInput from "./SearchInput";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,15 +57,12 @@ export default function Navbar() {
                   <div className="text-sm font-medium">{user.name}</div>
                   <div className="text-xs text-gray-400">{user.email}</div>
                 </div>
-                {user.image && (
-                  <Image
-                    src={user.image}
-                    alt={user.name}
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                )}
+                <Avatar>
+                  <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
+                  <AvatarFallback>
+                    {user.name ? user.name.slice(0, 2).toUpperCase() : "U"}
+                  </AvatarFallback>
+                </Avatar>
               </div>
             )}
 
@@ -123,15 +124,12 @@ export default function Navbar() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center gap-3 mb-8"
               >
-                {user.image && (
-                  <Image
-                    src={user.image}
-                    alt={user.name}
-                    width={64}
-                    height={64}
-                    className="rounded-full"
-                  />
-                )}
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
+                  <AvatarFallback>
+                    {user.name ? user.name.slice(0, 2).toUpperCase() : "U"}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="text-center">
                   <div className="text-lg font-semibold">{user.name}</div>
                   <div className="text-sm text-gray-400">{user.email}</div>
