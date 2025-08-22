@@ -6,7 +6,7 @@ import UpcomingReleases from "@/components/UpComingReleases";
 
 export default function Page() {
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-black">
             <TrendingCarousel />
             <Popular />
             <TopRatedMovies />

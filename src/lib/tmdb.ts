@@ -20,6 +20,8 @@ export const TMDB_API = {
     `${BASE_URL}/movie/${id}/similar?api_key=${API_KEY}`,
   moviecredits: (id: string) =>
     `${BASE_URL}/movie/${id}/credits?api_key=${API_KEY}`,
+  movievideos: (id: string) =>
+    `${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`,
   genres: `${BASE_URL}/genre/movie/list?api_key=${API_KEY}`,
 };
 

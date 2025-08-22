@@ -9,10 +9,11 @@ import { navLinks } from "@/constants/NavLinks";
 import { Button } from "./ui/button";
 import SearchInput from "./SearchInput";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const router = useRouter();
 
   const toggleMenu = () => setMenuOpen(prev => !prev);
@@ -43,33 +44,56 @@ export default function Navbar() {
           {/* Search Bar (desktop) */}
           <SearchInput className="hidden md:flex" />
 
-          {/* Hamburger Icon */}
-          <button
-            className="text-2xl font-bold md:hidden focus:outline-none hover:text-cyan-400 transition"
-            onClick={toggleMenu}
-          >
-            {menuOpen ? <RxCross1 /> : <RxHamburgerMenu />}
-          </button>
-
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex space-x-6 text-base items-center">
-            {filteredLinks.map(link => (
-              <Link key={link.label} href={link.path}>
-                <span className="relative group cursor-pointer">
-                  {link.label}
-                  <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-cyan-400 group-hover:w-full transition-all duration-300" />
-                </span>
-              </Link>
-            ))}
+          {/* User Info & Hamburger */}
+          <div className="flex items-center gap-4">
+            {/* User Info (desktop) */}
             {user && (
-              <Button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-1.5 text-sm rounded-lg shadow-md"
-              >
-                Logout
-              </Button>
+              <div className="hidden md:flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-sm font-medium">{user.name}</div>
+                  <div className="text-xs text-gray-400">{user.email}</div>
+                </div>
+                {user.image && (
+                  <Image
+                    src={user.image}
+                    alt={user.name}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                )}
+              </div>
             )}
-          </nav>
+
+            {/* Hamburger Icon */}
+            <button
+              className="text-2xl font-bold md:hidden focus:outline-none hover:text-cyan-400 transition"
+              onClick={toggleMenu}
+            >
+              {menuOpen ? <RxCross1 /> : <RxHamburgerMenu />}
+            </button>
+
+            {/* Desktop Nav Links */}
+            <nav className="hidden md:flex space-x-6 text-base items-center">
+              {filteredLinks.map(link => (
+                <Link key={link.label} href={link.path}>
+                  <span className="relative group cursor-pointer">
+                    {link.label}
+                    <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-cyan-400 group-hover:w-full transition-all duration-300" />
+                  </span>
+                </Link>
+              ))}
+              {user && (
+                <Button
+                  onClick={handleLogout}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-1.5 text-sm rounded-lg shadow-md disabled:opacity-50"
+                >
+                  {isLoading ? 'Signing out...' : 'Logout'}
+                </Button>
+              )}
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -90,6 +114,30 @@ export default function Navbar() {
             >
               <RxCross1 />
             </button>
+
+            {/* User Info (mobile) */}
+            {user && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center gap-3 mb-8"
+              >
+                {user.image && (
+                  <Image
+                    src={user.image}
+                    alt={user.name}
+                    width={64}
+                    height={64}
+                    className="rounded-full"
+                  />
+                )}
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{user.name}</div>
+                  <div className="text-sm text-gray-400">{user.email}</div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Menu links */}
             <motion.nav
@@ -124,9 +172,10 @@ export default function Navbar() {
                     handleLogout();
                     toggleMenu();
                   }}
-                  className="text-red-400 hover:text-red-500 transition text-xl"
+                  disabled={isLoading}
+                  className="text-red-400 hover:text-red-500 transition text-xl disabled:opacity-50"
                 >
-                  Logout
+                  {isLoading ? 'Signing out...' : 'Logout'}
                 </motion.button>
               )}
             </motion.nav>

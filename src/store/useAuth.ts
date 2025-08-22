@@ -1,31 +1,90 @@
-import { AuthState } from '@/types'
-import { create } from 'zustand'
-import { persist, StorageValue } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import React from 'react';
 
-const customStorage = {
-  getItem: (name: string): StorageValue<AuthState> | null => {
-    const item = localStorage.getItem(name)
-    return item ? JSON.parse(item) : null
-  },
-  setItem: (name: string, value: StorageValue<AuthState>) => {
-    localStorage.setItem(name, JSON.stringify(value))
-  },
-  removeItem: (name: string) => {
-    localStorage.removeItem(name)
-  },
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+}
+
+interface AuthState {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (provider?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAuth = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      token: null,
-      setUser: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      isLoading: false,
+      isAuthenticated: false,
+      
+      login: async (provider = 'google') => {
+        set({ isLoading: true });
+        try {
+          await signIn(provider, { callbackUrl: '/' });
+        } catch (error) {
+          console.error('Login error:', error);
+          set({ isLoading: false });
+        }
+      },
+      
+      logout: async () => {
+        set({ isLoading: true });
+        try {
+          await signOut({ callbackUrl: '/login' });
+          set({ user: null, isAuthenticated: false });
+        } catch (error) {
+          console.error('Logout error:', error);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      
+      setUser: (user: User | null) => {
+        set({ 
+          user, 
+          isAuthenticated: !!user,
+          isLoading: false 
+        });
+      },
+      
+      setLoading: (loading: boolean) => {
+        set({ isLoading: loading });
+      },
     }),
     {
-      name: 'cine-scope-auth',
-      storage: customStorage, 
+      name: 'auth-storage',
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
-)
+);
+
+// Hook to sync NextAuth session with Zustand store
+export const useAuthSync = () => {
+  const { data: session, status } = useSession();
+  const { setUser } = useAuth();
+  
+  React.useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (session?.user) {
+      setUser({
+        id: session.user.id || '',
+        name: session.user.name || '',
+        email: session.user.email || '',
+        image: session.user.image || undefined,
+      });
+    } else {
+      setUser(null);
+    }
+  }, [session, status, setUser]);
+};

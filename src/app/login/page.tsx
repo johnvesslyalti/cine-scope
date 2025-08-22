@@ -1,105 +1,93 @@
 'use client';
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/store/useAuth";
-import axios, { AxiosError } from "axios";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAuth } from '@/store/useAuth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { FaGoogle, FaFilm } from 'react-icons/fa';
+import Link from 'next/link';
 
-export default function Login() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const { setUser } = useAuth();
+export default function LoginPage() {
+  const { user, login, isLoading } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-    setLoading(true);
-
-    try {
-      const response = await axios.post("api/auth/login", { email, password });
-      const { user, token } = response.data;
-
-      setUser(user, token);
-      setMessage("Login Successful 🎉");
-
-      setTimeout(() => router.push("/"), 1000); // Redirect after success
-    } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
-      console.error(error.response?.data?.message || "Login failed");
-      setError(error.response?.data?.message || "Invalid credentials");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (user) {
+      router.push('/');
     }
+  }, [user, router]);
+
+  const handleGoogleLogin = async () => {
+    await login('google');
   };
 
+  if (user) {
+    return null; // Will redirect
+  }
+
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-black via-zinc-900 to-black px-4">
-      {/* Success Message */}
-      {message && (
-        <Alert className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm rounded-xl border border-green-500 bg-green-900 text-green-200 shadow-xl transition-all duration-300">
-          <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        {/* Logo and Title */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <FaFilm className="text-6xl text-cyan-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Cine Scope</h1>
+          <p className="text-gray-400">Sign in to manage your movie watchlist</p>
+        </div>
 
-      {/* Error Message */}
-      {error && (
-        <Alert className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm rounded-xl border border-red-500 bg-red-900 text-red-200 shadow-xl transition-all duration-300">
-          {error}
-        </Alert>
-      )}
-
-      {/* Login Form Card */}
-      <Card className="w-full max-w-[350px] md:max-w-md rounded-2xl bg-zinc-950 border border-zinc-800 shadow-lg">
-        <CardTitle className="text-center text-2xl font-semibold pt-6 text-white">
-          Login to Cine Scope
-        </CardTitle>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid gap-2">
-              <Label htmlFor="email" className="text-white">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="password" className="text-white">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-cyan-600 hover:bg-cyan-700 transition text-white mt-2"
-              disabled={loading}
+        {/* Login Card */}
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+          <div className="space-y-6">
+            {/* Google Sign In Button */}
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white hover:bg-gray-100 text-gray-900 font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Logging in..." : "Login"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <FaGoogle className="text-xl" />
+              {isLoading ? 'Signing in...' : 'Continue with Google'}
+            </button>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/20"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-transparent text-gray-400">or</span>
+              </div>
+            </div>
+
+            {/* Guest Access */}
+            <div className="text-center">
+              <p className="text-gray-400 text-sm mb-4">
+                Want to explore without signing in?
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition-all duration-200 border border-white/20"
+              >
+                Browse as Guest
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-gray-500 text-sm">
+            By signing in, you agree to our{' '}
+            <Link href="#" className="text-cyan-400 hover:text-cyan-300">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="#" className="text-cyan-400 hover:text-cyan-300">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

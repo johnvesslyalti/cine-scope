@@ -1,32 +1,33 @@
-import { ThemeProvider } from '@/components/ThemeProvider';
-import './globals.css';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Providers } from "@/components/Providers";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html lang='en' suppressHydrationWarning={true}>
-            <head>
-                <title>Cine Scope</title>
-            </head>
-            <body>
-                <ThemeProvider
-                    attribute={"class"}
-                    defaultTheme='system'
-                    enableSystem={true}
-                    disableTransitionOnChange={true}
-                >
-                <header className="sticky top-0 z-50 bg-black shadow-md">
-                    <Navbar />
-                </header>
-                <main>
-                    { children }
-                </main>
-                <footer>
-                    <Footer />
-                </footer>
-                </ThemeProvider>
-            </body>
-        </html>
-    )
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Cine Scope - Movie Discovery Platform",
+  description: "Discover trending, top-rated, and upcoming movies. Manage your personalized watchlist and explore the world of cinema.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <Providers>
+          <div className="min-h-screen bg-black">
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+          </div>
+        </Providers>
+      </body>
+    </html>
+  );
 }

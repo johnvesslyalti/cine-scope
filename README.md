@@ -13,10 +13,10 @@ Demo:
 Features:
 
     1. Authentication & Authorization
-        - User registration and login with secure password hashing (bcrypt)
-        - Session-based authentication with NextAuth.js and JWT
+        - Google OAuth authentication with NextAuth.js
+        - Secure session management
         - Protected routes for logged-in users
-        - View current user session via /api/auth/users/me
+        - User profile with Google account information
     
     2. Movie Discovery
         - Browse movies categorized as:
@@ -27,48 +27,70 @@ Features:
         - Each movie card includes poster, title, release year, and rating
         - Detailed movie page with additional metadata (genres, overview, etc.)
     
-    3. Trending Carousel
+    3. Enhanced Movie Details
+        - Cast information with photos and character names
+        - Similar movies recommendations
+        - Movie trailers via YouTube integration
+        - Financial information (budget, revenue)
+        - Runtime and vote statistics
+    
+    4. Advanced Search System
+        - Search movies by title
+        - Advanced filters by genre, year, and rating
+        - Search history with localStorage persistence
+        - Pagination for search results
+    
+    5. Trending Carousel
         - Interactive Keen Slider-powered carousel for trending movies
         - Auto-scroll animation using a custom useAutoSlider hook
     
-    4. Watchlist System
+    6. Watchlist System
         - Add or remove movies to/from personal watchlist
         - View watchlist in a dedicated page (/watchlist)
         - Persistent state using Zustand and synced with PostgreSQL backend
         - Secure API endpoints under /api/watchlist for authorized users
 
-    5. Theme Support
+    7. Notification System
+        - Toast notifications for user actions
+        - Success, error, info, and warning message types
+        - Animated notifications with auto-dismiss
+
+    8. Theme Support
         - Toggle between light and dark themes using ThemeProvider.tsx
 
-    6. Navigation & Layout
+    9. Navigation & Layout
         - Reusable Navbar and Footer
         - Responsive navigation links from constants/Navlinks.ts
         - Shadcn UI for consistent styling across inputs, alerts, and cards
+        - User profile display in navigation
 
-    7. Backend API (Next.js API Routes)
+    10. Backend API (Next.js API Routes)
 
         RESTful API for:
 
-            - POST /api/auth/register – Register new users
-            - POST /api/auth/login – Authenticate users
-            - GET /api/auth/users/me – Get logged-in user data
             - GET/POST/DELETE /api/watchlist – Manage watchlist items
+            - GET /api/search – Search movies with filters
+            - GET /api/genres – Get movie genres for filters
+            - GET /api/movies/[id]/videos – Get movie trailers
 
-    8. Modern UI/UX
+    11. Modern UI/UX
         - Built with Tailwind CSS and Shadcn UI components
         - Fully responsive for mobile, tablet, and desktop
         - Clean animations, icons (React Icons), and adaptive layout
+        - Loading skeletons for better user experience
 
 Tech Stack:
 
     Frontend:
-        Next.js + TypeScipt
+        Next.js + TypeScript
         Tailwind CSS
         Shadcn UI
         React Icons
+        Framer Motion
 
     Backend:
-        Next.js API Routes + TypeScipt
+        Next.js API Routes + TypeScript
+        NextAuth.js for authentication
     
     Database:
         PostgreSQL
@@ -79,22 +101,57 @@ Tech Stack:
 
     Authentication:
         NextAuth.js
-        Custom JWT Auth
+        Google OAuth Provider
 
 Installation:
 
-    1. npx create-next-app@latest
-    2. npm install @prisma/client prisma next-auth @next-auth/prisma-adapter zustand shadcn/ui react-icons
-    3. npm install bcrypt jsonwebtoken zod
-    4. npm install --save-dev @types/jsonwebtoken @types/bcrypt
-    5. npm install keen-slider
-    6. npm install axios
+    1. Clone the repository
+    2. Install dependencies:
+       ```bash
+       npm install
+       ```
 
-    shadcn:
-        npx shadcn@latest add card
-        npx shadcn@latest add label
-        npx shadcn@latest add input
-        npx shadcn@latest add alert
+    3. Set up environment variables:
+       Create a `.env.local` file with the following variables:
+       ```
+       # Database
+       DATABASE_URL="postgresql://username:password@localhost:5432/cine_scope"
+       
+       # NextAuth.js
+       NEXTAUTH_SECRET="your-nextauth-secret-key-here"
+       NEXTAUTH_URL="http://localhost:3000"
+       
+       # Google OAuth (Get these from Google Cloud Console)
+       GOOGLE_CLIENT_ID="your-google-client-id"
+       GOOGLE_CLIENT_SECRET="your-google-client-secret"
+       
+       # TMDB API
+       NEXT_PUBLIC_TMDB_API_KEY="your-tmdb-api-key"
+       ```
+
+    4. Set up Google OAuth:
+       - Go to Google Cloud Console (https://console.cloud.google.com/)
+       - Create a new project or select existing one
+       - Enable Google+ API
+       - Go to Credentials → Create Credentials → OAuth 2.0 Client ID
+       - Set authorized redirect URI to: `http://localhost:3000/api/auth/callback/google`
+       - Copy Client ID and Client Secret to your .env.local file
+
+    5. Set up TMDB API:
+       - Go to https://www.themoviedb.org/settings/api
+       - Request an API key
+       - Copy the API key to your .env.local file
+
+    6. Set up database:
+       ```bash
+       npx prisma migrate dev
+       npx prisma generate
+       ```
+
+    7. Run the development server:
+       ```bash
+       npm run dev
+       ```
 
 Folder Structure:
 
@@ -105,21 +162,26 @@ Folder Structure:
                 |- app/
                     |- api/
                         |- auth/
-                            |- login/
+                            |- [...nextauth]/
                                 |- route.ts
-                            |- register/
-                                |- route.ts
-                            |- users/
-                                |-me/
+                        |- genres/
+                            |- route.ts
+                        |- movies/
+                            |- [id]/
+                                |- videos/
                                     |- route.ts
+                        |- search/
+                            |- route.ts
                         |- watchlist/
                             |- route.ts
                     |- login/
                         |- page.tsx
                     |- movie/
+                        |- [id]/
+                            |- page.tsx
+                    |- search/
                         |- page.tsx
-                    |- register/
-                        |- page.tsx
+                        |- SearchClient.tsx
                     |- watchlist/
                         |- page.tsx
                     |- globals.css
@@ -127,12 +189,16 @@ Folder Structure:
                     |- page.tsx
                 |- components/
                     |- ui/
+                    |- AuthProvider.tsx
                     |- Footer.tsx
+                    |- LoadingSkeleton.tsx
                     |- Navbar.tsx
+                    |- Notification.tsx
                     |- NowPlayingMovies.tsx
                     |- Popular.tsx
                     |- ThemeProvider.tsx
                     |- TopRatedMovies.tsx
+                    |- TrailerModal.tsx
                     |- TrendingCorousel.tsx
                     |- UpComingRelease.tsx
                 |- constants/
@@ -141,7 +207,6 @@ Folder Structure:
                     |- useAutoSlider.ts
                 |- lib/
                     |- auth.ts
-                    |- jwt.ts
                     |- prisma.ts
                     |- tmdb.ts
                     |- utils.ts
