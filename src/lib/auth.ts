@@ -1,7 +1,8 @@
-import { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+// lib/auth.ts
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
+import { NextAuthOptions } from "next-auth";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -13,23 +14,19 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async session({ session, user }) {
+      // Attach user id to session
       if (session.user) {
         session.user.id = user.id;
       }
       return session;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
   },
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
   session: {
-    strategy: "jwt",
+    strategy: "database", // ← no JWT, stores session in DB
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
 };
