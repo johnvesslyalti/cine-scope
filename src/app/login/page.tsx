@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { FaGoogle, FaFilm } from 'react-icons/fa';
 import Link from 'next/link';
+import React from 'react';
 
 export default function LoginPage() {
   const { user, login, isLoading } = useAuth();
   const router = useRouter();
+  const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -17,7 +19,32 @@ export default function LoginPage() {
   }, [user, router]);
 
   const handleGoogleLogin = async () => {
-    await login('google');
+    console.log('Login button clicked');
+    setError(null);
+    try {
+      console.log('Attempting to login with Google...');
+      await login('google');
+      console.log('Login function completed');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Login failed. Please check your internet connection and try again.');
+    }
+  };
+
+  const testEnvironment = async () => {
+    try {
+      const response = await fetch('/api/test-env');
+      const data = await response.json();
+      console.log('Environment check:', data);
+      if (!data.hasGoogleClientId || !data.hasGoogleClientSecret) {
+        setError('Google OAuth credentials are not configured. Please check your environment variables.');
+      } else {
+        setError('Environment variables are configured correctly.');
+      }
+    } catch (error) {
+      console.error('Environment test error:', error);
+      setError('Failed to test environment configuration.');
+    }
   };
 
   if (user) {
@@ -39,6 +66,13 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
           <div className="space-y-6">
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Google Sign In Button */}
             <button
               onClick={handleGoogleLogin}
@@ -47,6 +81,14 @@ export default function LoginPage() {
             >
               <FaGoogle className="text-xl" />
               {isLoading ? 'Signing in...' : 'Continue with Google'}
+            </button>
+
+            {/* Test Environment Button */}
+            <button
+              onClick={testEnvironment}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-200"
+            >
+              Test Environment Configuration
             </button>
 
             {/* Divider */}

@@ -28,9 +28,12 @@ export const useAuth = create<AuthState>()(
       isAuthenticated: false,
       
       login: async (provider = 'google') => {
+        console.log('Auth store login called with provider:', provider);
         set({ isLoading: true });
         try {
-          await signIn(provider, { callbackUrl: '/' });
+          console.log('Calling signIn...');
+          const result = await signIn(provider, { callbackUrl: '/' });
+          console.log('signIn result:', result);
         } catch (error) {
           console.error('Login error:', error);
           set({ isLoading: false });
