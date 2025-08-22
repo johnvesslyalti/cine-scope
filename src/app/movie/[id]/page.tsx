@@ -63,6 +63,12 @@ export default function MovieDetails() {
   const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'similar'>('overview');
   const [showTrailerModal, setShowTrailerModal] = useState(false);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('MovieDetails - User state:', user);
+    console.log('MovieDetails - User authenticated:', !!user);
+  }, [user]);
+
   useEffect(() => {
     const fetchMovieData = async () => {
       try {

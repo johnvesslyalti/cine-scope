@@ -14,7 +14,7 @@ export default function TrendingCarousel() {
   const { trending, setTrending } = useCineStore();
   const { sliderRef, sliderInstanceRef } = useAutoSlider({
     slides: { perView: 1, spacing: 15 },
-  });
+  }, trending.length);
 
   useEffect(() => {
     const fetchTrendingMovies = async () => {
@@ -31,6 +31,22 @@ export default function TrendingCarousel() {
 
   const prevSlide = () => sliderInstanceRef.current?.prev();
   const nextSlide = () => sliderInstanceRef.current?.next();
+
+  // Don't render the slider if there are no trending movies
+  if (trending.length === 0) {
+    return (
+      <section className="relative px-4 md:px-10 py-8 md:py-14 bg-gradient-to-b from-black/90 to-black">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+            🎞️ Trending Today
+          </h2>
+        </div>
+        <div className="h-[420px] rounded-xl overflow-hidden bg-zinc-900 flex items-center justify-center">
+          <p className="text-white/60">Loading trending movies...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative px-4 md:px-10 py-8 md:py-14 bg-gradient-to-b from-black/90 to-black">

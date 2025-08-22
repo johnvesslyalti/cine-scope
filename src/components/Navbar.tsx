@@ -1,27 +1,25 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/store/useAuth";
 import { RxCross1, RxHamburgerMenu } from "react-icons/rx";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { navLinks } from "@/constants/NavLinks";
 import SearchInput from "./SearchInput";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Bookmark, LogOut } from "lucide-react";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, login, logout, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => setMenuOpen(prev => !prev);
+  const toggleDropdown = () => setDropdownOpen(prev => !prev);
 
   const handleLogout = () => {
     logout();
@@ -30,21 +28,28 @@ export default function Navbar() {
 
   const handleLogin = async () => {
     try {
-      await login("google"); // directly start Google login
+      await login("google");
     } catch (err) {
       console.error("Login failed:", err);
     }
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     setMenuOpen(false);
+    setDropdownOpen(false);
   }, [pathname]);
-
-  const filteredLinks = navLinks.filter(link => {
-    if (user && link.guestOnly) return false;
-    if (!user && link.authRequired) return false;
-    return true;
-  });
 
   const getInitials = (name?: string) => {
     if (!name) return "U";
@@ -69,17 +74,65 @@ export default function Navbar() {
 
           {/* User Info & Hamburger */}
           <div className="flex items-center gap-4">
-            {user && (
-              <div className="hidden md:flex items-center gap-3">
-                <div className="text-right">
-                  <div className="text-sm font-medium">{user.name}</div>
-                  <div className="text-xs text-gray-400">{user.email}</div>
-                </div>
-                <Avatar>
-                  <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
-                  <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                </Avatar>
+            {user ? (
+              <div className="relative" ref={dropdownRef}>
+                <button 
+                  onClick={toggleDropdown} 
+                  className="hidden md:flex items-center gap-3 focus:outline-none hover:opacity-80 transition"
+                >
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
+                </button>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden z-50"
+                    >
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-zinc-700">
+                        <div className="text-sm font-medium text-white">{user.name}</div>
+                        <div className="text-xs text-gray-400">{user.email}</div>
+                      </div>
+                      
+                      {/* Menu Items */}
+                      <div className="py-1">
+                        <Link
+                          href="/watchlist"
+                          className="flex items-center gap-3 px-4 py-2 text-white hover:bg-zinc-800 transition"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <Bookmark className="w-4 h-4" />
+                          Watchlist
+                        </Link>
+                        <button
+                          onClick={() => { handleLogout(); setDropdownOpen(false); }}
+                          disabled={isLoading}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-zinc-800 hover:text-red-500 transition disabled:opacity-50"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Logout"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+            ) : (
+              <button
+                onClick={handleLogin}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-4 py-1.5 text-sm rounded-lg shadow-md disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
+              </button>
             )}
 
             {/* Hamburger */}
@@ -90,37 +143,6 @@ export default function Navbar() {
             >
               {menuOpen ? <RxCross1 /> : <RxHamburgerMenu />}
             </button>
-
-            {/* Desktop Nav Links */}
-            <nav className="hidden md:flex space-x-6 text-base items-center">
-              {filteredLinks.map(link => (
-                <Link key={link.label} href={link.path}>
-                  <span className="relative group cursor-pointer">
-                    {link.label}
-                    <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-cyan-400 group-hover:w-full transition-all duration-300" />
-                  </span>
-                </Link>
-              ))}
-
-              {/* Auth Button */}
-              {user ? (
-                <button
-                  onClick={handleLogout}
-                  disabled={isLoading}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-1.5 text-sm rounded-lg shadow-md disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Logout"}
-                </button>
-              ) : (
-                <button
-                  onClick={handleLogin}
-                  disabled={isLoading}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-4 py-1.5 text-sm rounded-lg shadow-md disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
-                </button>
-              )}
-            </nav>
           </div>
         </div>
       </header>
@@ -173,32 +195,33 @@ export default function Navbar() {
               }}
               className="flex flex-col items-center gap-6 text-xl"
             >
-              {filteredLinks.map(link => (
-                <motion.div
-                  key={link.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Link href={link.path} onClick={toggleMenu}>
-                    <span className="hover:text-cyan-400 transition">{link.label}</span>
-                  </Link>
-                </motion.div>
-              ))}
               {user ? (
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  onClick={() => {
-                    handleLogout();
-                    toggleMenu();
-                  }}
-                  disabled={isLoading}
-                  className="text-red-400 hover:text-red-500 transition text-xl disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Logout"}
-                </motion.button>
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Link href="/watchlist" onClick={toggleMenu} className="flex items-center gap-3 hover:text-cyan-400 transition">
+                      <Bookmark className="w-5 h-5" />
+                      Watchlist
+                    </Link>
+                  </motion.div>
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    onClick={() => {
+                      handleLogout();
+                      toggleMenu();
+                    }}
+                    disabled={isLoading}
+                    className="flex items-center gap-3 text-red-400 hover:text-red-500 transition text-xl disabled:opacity-50"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Logout"}
+                  </motion.button>
+                </>
               ) : (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
@@ -209,7 +232,7 @@ export default function Navbar() {
                     toggleMenu();
                   }}
                   disabled={isLoading}
-                  className="text-cyan-400 hover:text-cyan-500 transition text-xl disabled:opacity-50"
+                  className="text-cyan-400 hover:text-cyan-500 transition text-xl"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Login"}
                 </motion.button>

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useKeenSlider, KeenSliderOptions } from 'keen-slider/react';
 
-export const useAutoSlider = (options: KeenSliderOptions = {}) => {
+export const useAutoSlider = (options: KeenSliderOptions = {}, slidesCount: number = 0) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const sliderAliveRef = useRef(true); // track if slider is alive
 
@@ -15,14 +15,17 @@ export const useAutoSlider = (options: KeenSliderOptions = {}) => {
       sliderAliveRef.current = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
 
-      intervalRef.current = setInterval(() => {
-        if (!sliderAliveRef.current) return; // guard against destroyed slider
-        try {
-          slider.next();
-        } catch (err) {
-          console.error('Error during auto-slide:', err);
-        }
-      }, 3000);
+      // Only start auto-sliding if there are multiple slides
+      if (slidesCount > 1) {
+        intervalRef.current = setInterval(() => {
+          if (!sliderAliveRef.current) return; // guard against destroyed slider
+          try {
+            slider.next();
+          } catch (err) {
+            console.error('Error during auto-slide:', err);
+          }
+        }, 3000);
+      }
     },
     destroyed() {
       sliderAliveRef.current = false;
