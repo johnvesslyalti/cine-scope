@@ -2,7 +2,7 @@ const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 
 if (!API_KEY) {
-  throw new Error("Missing TMDB API Key");
+  console.warn("Missing TMDB API Key - using placeholder. Get your API key from https://www.themoviedb.org/settings/api");
 }
 
 export const TMDB_API = {

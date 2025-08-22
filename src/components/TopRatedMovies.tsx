@@ -18,12 +18,13 @@ interface WatchlistResponse {
 }
 
 export default function TopRatedMovies() {
+  const { user } = useAuth();
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
-  const { token } = useAuth();
+
 
   useEffect(() => {
     const fetchTopRated = async () => {
@@ -40,23 +41,21 @@ export default function TopRatedMovies() {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+
     const fetchWatchList = async () => {
       try {
-        const res = await axios.get<WatchlistResponse>('/api/watchlist', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get<WatchlistResponse>('/api/watchlist');
         setAddedMovieIds(new Set(res.data.data.map((item) => item.movieId.toString())));
       } catch {}
     };
     fetchWatchList();
-  }, [token]);
+  }, []);
 
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
-    const movieId = movie.id;
+    const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
-        await deleteFromWatchlist(movieId, token);
+        await deleteFromWatchlist(movieId);
         setAddedMovieIds((prev) => {
           const updated = new Set(prev);
           updated.delete(movieId);
@@ -68,7 +67,7 @@ export default function TopRatedMovies() {
       }
     } else {
       try {
-        await addToWatchlist(movie, token);
+        await addToWatchlist(movie);
         setAddedMovieIds((prev) => new Set(prev).add(movieId));
         setAlertMessage('Added to Watchlist');
       } catch {
@@ -117,12 +116,12 @@ export default function TopRatedMovies() {
               </Link>
 
               {/* Bookmark button */}
-              {token && (
+              {user && (
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={() =>
                     handleToggleWatchlist({
-                      id: movie.id.toString(),
+                      id: movie.id,
                       title: movie.title,
                       poster_path: movie.poster_path,
                     })

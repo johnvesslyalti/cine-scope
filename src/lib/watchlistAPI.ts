@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 interface WatchlistPayload {
-  id: string;
+  id: number;
   title: string;
   poster_path: string;
 }

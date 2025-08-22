@@ -20,7 +20,26 @@ interface WatchlistItem {
 }
 
 type WatchlistMovie = {
-  id: string;
+  id: number;
   title: string;
   poster_path: string;
 };
+
+// NextAuth type extensions
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  }
+  
+  interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  }
+}

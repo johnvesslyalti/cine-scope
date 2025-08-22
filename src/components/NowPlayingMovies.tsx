@@ -13,12 +13,13 @@ import { Alert, AlertDescription } from './ui/alert';
 import { WatchlistMovie } from '@/types';
 
 export default function NowPlayingMovies() {
+  const { user } = useAuth();
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const { token } = useAuth();
+
 
   useEffect(() => {
     const fetchNowPlaying = async () => {
@@ -37,11 +38,9 @@ export default function NowPlayingMovies() {
 
   useEffect(() => {
     const fetchWatchlist = async () => {
-      if (!token) return;
+  
       try {
-        const res = await axios.get('/api/watchlist', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get('/api/watchlist');
         const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
         setAddedMovieIds(new Set(ids));
       } catch (err) {
@@ -49,13 +48,13 @@ export default function NowPlayingMovies() {
       }
     };
     fetchWatchlist();
-  }, [token]);
+  }, []);
 
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
-    const movieId = movie.id;
+    const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
-        await deleteFromWatchlist(movieId, token);
+        await deleteFromWatchlist(movieId);
         setAddedMovieIds((prev) => {
           const updated = new Set(prev);
           updated.delete(movieId);
@@ -67,7 +66,7 @@ export default function NowPlayingMovies() {
       }
     } else {
       try {
-        await addToWatchlist(movie, token);
+        await addToWatchlist(movie);
         setAddedMovieIds((prev) => new Set(prev).add(movieId));
         setAlertMessage('Added to Watchlist');
       } catch {
@@ -119,7 +118,7 @@ export default function NowPlayingMovies() {
                 className="relative min-w-[160px] max-w-[160px] hover:scale-105 transition-transform duration-300 snap-start group"
               >
                 {/* Watchlist button only if logged in */}
-                {token && (
+                {user && (
                   <button
                     className={`absolute top-2 right-2 z-20 p-2 rounded-full shadow-md transition-transform transform hover:scale-110 ${
                       isAdded
@@ -128,7 +127,7 @@ export default function NowPlayingMovies() {
                     }`}
                     onClick={() =>
                       handleToggleWatchlist({
-                        id: movie.id.toString(),
+                        id: movie.id,
                         title: movie.title,
                         poster_path: movie.poster_path,
                       })

@@ -24,7 +24,7 @@ export default function UpcomingReleases() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
-  const { user, token } = useAuth(); // ← use user presence
+  const { user } = useAuth(); // ← use user presence
 
   // Fetch upcoming
   useEffect(() => {
@@ -44,29 +44,27 @@ export default function UpcomingReleases() {
   // Fetch watchlist only when user is present
   useEffect(() => {
     const fetchWatchList = async () => {
-      if (!user || !token) {
+      if (!user) {
         setAddedMovieIds(new Set()); // clear when user logs out / not present
         return;
       }
       try {
-        const res = await axios.get<WatchlistResponse>('/api/watchlist', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get<WatchlistResponse>('/api/watchlist');
         setAddedMovieIds(new Set(res.data.data.map((i) => i.movieId.toString())));
       } catch {
         // ignore silently
       }
     };
     fetchWatchList();
-  }, [user, token]);
+  }, [user]);
 
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
-    if (!user || !token) return; // extra safety
+    if (!user) return; // extra safety
 
-    const movieId = movie.id;
+    const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
-        await deleteFromWatchlist(movieId, token);
+        await deleteFromWatchlist(movieId);
         setAddedMovieIds((prev) => {
           const updated = new Set(prev);
           updated.delete(movieId);
@@ -78,7 +76,7 @@ export default function UpcomingReleases() {
       }
     } else {
       try {
-        await addToWatchlist(movie, token);
+        await addToWatchlist(movie);
         setAddedMovieIds((prev) => new Set(prev).add(movieId));
         setAlertMessage('Added to Watchlist');
       } catch {
@@ -105,7 +103,7 @@ export default function UpcomingReleases() {
 
       <div className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4">
         {upcoming.map((movie) => {
-          const isAdded = user && token ? addedMovieIds.has(movie.id.toString()) : false;
+          const isAdded = user ? addedMovieIds.has(movie.id.toString()) : false;
 
           return (
             <motion.div
@@ -134,12 +132,12 @@ export default function UpcomingReleases() {
               </Link>
 
               {/* Bookmark button — hidden if no user */}
-              {user && token && (
+              {user && (
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={() =>
                     handleToggleWatchlist({
-                      id: movie.id.toString(),
+                      id: movie.id,
                       title: movie.title,
                       poster_path: movie.poster_path,
                     })

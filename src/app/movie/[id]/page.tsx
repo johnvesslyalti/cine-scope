@@ -107,10 +107,10 @@ export default function MovieDetails() {
 
   const handleToggleWatchlist = async () => {
     if (!movie || !user) return;
-    const payload = { id: movie.id.toString(), title: movie.title, poster_path: movie.poster_path };
+    const payload = { id: movie.id, title: movie.title, poster_path: movie.poster_path };
     try {
       if (isInWatchlist) {
-        await deleteFromWatchlist(payload.id);
+        await deleteFromWatchlist(payload.id.toString());
         setIsInWatchlist(false);
         showSuccess('Removed from Watchlist', `${movie.title} has been removed from your watchlist.`);
       } else {
