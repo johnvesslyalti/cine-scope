@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaFilter, FaHistory, FaStar, FaCalendarAlt, FaTimes } from "react-icons/fa";
+import AISearchAssistant from "@/components/AISearchAssistant";
 
 interface Movie {
   id: number;
@@ -130,6 +131,12 @@ export default function SearchClient() {
           </h1>
           
           <div className="flex gap-2">
+            <AISearchAssistant 
+              onSearch={(query) => router.push(`/search?q=${encodeURIComponent(query)}`)}
+              currentQuery={query}
+              searchHistory={searchHistory}
+            />
+            
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"

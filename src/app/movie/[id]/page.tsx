@@ -20,6 +20,7 @@ import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
 import { useNotifications } from '@/components/Notification';
 import TrailerModal from '@/components/TrailerModal';
+import AIMovieAnalysis from '@/components/AIMovieAnalysis';
 
 interface Genre { id: number; name: string; }
 interface CastMember {
@@ -291,9 +292,19 @@ export default function MovieDetails() {
             {/* Tab Content */}
             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6">
               {activeTab === 'overview' && (
-                <div>
-                  <h2 className="text-2xl font-semibold mb-3">Overview</h2>
-                  <p className="text-gray-200 leading-relaxed">{movie.overview}</p>
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-semibold mb-3">Overview</h2>
+                    <p className="text-gray-200 leading-relaxed">{movie.overview}</p>
+                  </div>
+                  
+                  {/* AI Movie Analysis */}
+                  <AIMovieAnalysis
+                    movieId={id}
+                    title={movie.title}
+                    overview={movie.overview}
+                    genres={movie.genres?.map(g => g.name) || []}
+                  />
                 </div>
               )}
 
