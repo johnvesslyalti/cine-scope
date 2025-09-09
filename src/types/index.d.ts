@@ -43,3 +43,5 @@ declare module "next-auth" {
     image?: string | null;
   }
 }
+
+export type TabKey = 'overview' | 'cast' | 'similar';

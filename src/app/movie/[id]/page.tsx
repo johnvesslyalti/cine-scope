@@ -20,7 +20,7 @@ import { useAuth } from '@/store/useAuth';
 import { useNotifications } from '@/components/Notification';
 import TrailerModal from '@/components/TrailerModal';
 import AIMovieAnalysis from '@/components/AIMovieAnalysis';
-import { WatchlistItem } from '@/types';
+import { TabKey, WatchlistItem } from '@/types';
 
 interface Genre { id: number; name: string; }
 interface CastMember {
@@ -276,7 +276,7 @@ export default function MovieDetails() {
               ].map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
-                  onClick={() => setActiveTab(key as any)}
+                  onClick={() => setActiveTab(key as TabKey)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
                     activeTab === key
                       ? 'bg-yellow-400 text-black font-semibold'
