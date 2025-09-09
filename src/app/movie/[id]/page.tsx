@@ -10,7 +10,6 @@ import {
   FaFilm,
   FaBookmark,
   FaRegBookmark,
-  FaPlay,
   FaUsers,
   FaEye,
   FaYoutube,
@@ -21,6 +20,7 @@ import { useAuth } from '@/store/useAuth';
 import { useNotifications } from '@/components/Notification';
 import TrailerModal from '@/components/TrailerModal';
 import AIMovieAnalysis from '@/components/AIMovieAnalysis';
+import { WatchlistItem } from '@/types';
 
 interface Genre { id: number; name: string; }
 interface CastMember {
@@ -95,7 +95,7 @@ export default function MovieDetails() {
       try {
         const res = await axios.get('/api/watchlist');
         setIsInWatchlist(
-          res.data.data.some((item: any) => item.movieId.toString() === id)
+          res.data.data.some((item: WatchlistItem) => item.movieId.toString() === id)
         );
       } catch (err) {
         console.error('Failed to check watchlist:', err);
