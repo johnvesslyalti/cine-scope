@@ -43,7 +43,7 @@ export const useAuth = create<AuthState>()(
       logout: async () => {
         set({ isLoading: true });
         try {
-          await signOut({ callbackUrl: '/login' });
+          await signOut({ callbackUrl: '/' });
           set({ user: null, isAuthenticated: false });
         } catch (error) {
           console.error('Logout error:', error);
