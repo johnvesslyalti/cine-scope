@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaBrain, FaStar, FaEye, FaHeart } from 'react-icons/fa';
+import { FaBrain, FaStar, FaEye } from 'react-icons/fa';
 import { useAuth } from '@/store/useAuth';
 import { useNotifications } from './Notification';
 
@@ -44,7 +44,7 @@ export default function AIRecommendations() {
         setError(data.error || 'Failed to load recommendations');
         showError('Error', data.error || 'Failed to load recommendations');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load recommendations');
       showError('Error', 'Failed to load recommendations');
     } finally {

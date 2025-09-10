@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { FaPlay, FaTimes, FaYoutube } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 interface Video {
   id: string;
@@ -99,7 +100,7 @@ export default function TrailerModal({ isOpen, onClose, movieId, movieTitle }: T
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <FaPlay className="text-gray-400 text-4xl mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">No trailers available</h3>
-                <p className="text-gray-400">This movie doesn't have any trailers yet.</p>
+                <p className="text-gray-400">This movie doesn&apos;t have any trailers yet.</p>
               </div>
             ) : (
               <div className="space-y-6">
@@ -133,7 +134,7 @@ export default function TrailerModal({ isOpen, onClose, movieId, movieTitle }: T
                         >
                           <div className="flex items-center gap-3">
                             <div className="flex-shrink-0">
-                              <img
+                              <Image height={72} width={120}
                                 src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`}
                                 alt={video.name}
                                 className="w-20 h-12 object-cover rounded"

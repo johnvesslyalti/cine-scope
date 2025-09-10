@@ -222,7 +222,7 @@ export class AIService {
   // Natural language search processing
   static async processNaturalLanguageSearch(
     query: string
-  ): Promise<{ searchTerm: string; filters: Record<string, any> }> {
+  ): Promise<{ searchTerm: string; filters: Record<string, string> }> {
     try {
       if (!process.env.OPENAI_API_KEY) {
         return { searchTerm: query, filters: {} };
