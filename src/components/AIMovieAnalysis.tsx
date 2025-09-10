@@ -1,10 +1,18 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { FaBrain, FaEye, FaUsers, FaExclamationTriangle, FaHeart, FaSadTear, FaMeh } from 'react-icons/fa';
+import { useState, useEffect, useCallback } from "react";
+import {
+  FaBrain,
+  FaEye,
+  FaUsers,
+  FaExclamationTriangle,
+  FaHeart,
+  FaSadTear,
+  FaMeh,
+} from "react-icons/fa";
 
 interface MovieAnalysis {
-  sentiment: 'positive' | 'negative' | 'neutral';
+  sentiment: "positive" | "negative" | "neutral";
   themes: string[];
   targetAudience: string;
   contentWarnings: string[];
@@ -18,57 +26,67 @@ interface AIMovieAnalysisProps {
   genres: string[];
 }
 
-export default function AIMovieAnalysis({ movieId, title, overview, genres }: AIMovieAnalysisProps) {
+export default function AIMovieAnalysis({
+  title,
+  overview,
+  genres,
+}: AIMovieAnalysisProps) {
   const [analysis, setAnalysis] = useState<MovieAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  useEffect(() => {
-    fetchAnalysis();
-  }, [movieId, title, overview, genres]);
-
-  const fetchAnalysis = async () => {
+  const fetchAnalysis = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/ai/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           overview,
-          genres
-        })
+          genres,
+        }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setAnalysis(data.analysis);
       } else {
-        setError('Failed to analyze movie');
+        setError("Failed to analyze movie");
       }
-    } catch (err) {
-      setError('Failed to analyze movie');
+    } catch {
+      setError("Failed to analyze movie");
     } finally {
       setLoading(false);
     }
-  };
+  }, [title, overview, genres]);
+
+  useEffect(() => {
+    fetchAnalysis();
+  }, [fetchAnalysis]);
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return <FaHeart className="text-green-400" />;
-      case 'negative': return <FaSadTear className="text-red-400" />;
-      default: return <FaMeh className="text-yellow-400" />;
+      case "positive":
+        return <FaHeart className="text-green-400" />;
+      case "negative":
+        return <FaSadTear className="text-red-400" />;
+      default:
+        return <FaMeh className="text-yellow-400" />;
     }
   };
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-400';
-      case 'negative': return 'text-red-400';
-      default: return 'text-yellow-400';
+      case "positive":
+        return "text-green-400";
+      case "negative":
+        return "text-red-400";
+      default:
+        return "text-yellow-400";
     }
   };
 
@@ -92,7 +110,7 @@ export default function AIMovieAnalysis({ movieId, title, overview, genres }: AI
           <h3 className="text-lg font-semibold text-white">AI Analysis</h3>
         </div>
         <p className="text-gray-400">
-          {error || 'AI analysis not available for this movie.'}
+          {error || "AI analysis not available for this movie."}
         </p>
       </div>
     );
@@ -108,21 +126,29 @@ export default function AIMovieAnalysis({ movieId, title, overview, genres }: AI
               <FaBrain className="text-white text-xl" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">AI Movie Analysis</h3>
-              <p className="text-gray-400 text-sm">Powered by artificial intelligence</p>
+              <h3 className="text-lg font-semibold text-white">
+                AI Movie Analysis
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Powered by artificial intelligence
+              </p>
             </div>
           </div>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-gray-400 hover:text-white transition"
           >
-            {isExpanded ? '−' : '+'}
+            {isExpanded ? "−" : "+"}
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className={`transition-all duration-300 ${isExpanded ? 'max-h-none' : 'max-h-96 overflow-hidden'}`}>
+      <div
+        className={`transition-all duration-300 ${
+          isExpanded ? "max-h-none" : "max-h-96 overflow-hidden"
+        }`}
+      >
         <div className="p-6 space-y-6">
           {/* Sentiment Analysis */}
           <div className="flex items-center gap-3 p-4 bg-zinc-800/50 rounded-lg">
@@ -132,7 +158,8 @@ export default function AIMovieAnalysis({ movieId, title, overview, genres }: AI
             <div>
               <h4 className="font-semibold text-white">Overall Sentiment</h4>
               <p className={`text-sm ${getSentimentColor(analysis.sentiment)}`}>
-                {analysis.sentiment.charAt(0).toUpperCase() + analysis.sentiment.slice(1)}
+                {analysis.sentiment.charAt(0).toUpperCase() +
+                  analysis.sentiment.slice(1)}
               </p>
             </div>
           </div>
@@ -209,4 +236,3 @@ export default function AIMovieAnalysis({ movieId, title, overview, genres }: AI
     </div>
   );
 }
-
