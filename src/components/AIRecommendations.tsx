@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { FaBrain, FaStar, FaEye } from 'react-icons/fa';
-import { useAuth } from '@/store/useAuth';
-import { useNotifications } from './Notification';
+import { useNotifications } from "./Notification";
+import { useAuth } from "@/store/useAuth";
+import Image from "next/image";
+import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
+import { FaBrain, FaStar, FaEye } from "react-icons/fa";
 
 interface AIRecommendation {
   movieId: string;
@@ -18,39 +18,41 @@ interface AIRecommendation {
 }
 
 export default function AIRecommendations() {
-  const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<AIRecommendation[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { showError } = useNotifications();
 
+  const fetchRecommendations = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/ai/recommendations");
+      const data = await response.json();
+
+      if (response.ok) {
+        setRecommendations(data.recommendations || []);
+      } else {
+        setError(data.error || "Failed to load recommendations");
+        showError("Error", data.error || "Failed to load recommendations");
+      }
+    } catch {
+      setError("Failed to load recommendations");
+      showError("Error", "Failed to load recommendations");
+    } finally {
+      setLoading(false);
+    }
+  }, [showError]);
+
   useEffect(() => {
     if (user) {
       fetchRecommendations();
     }
-  }, [user]);
-
-  const fetchRecommendations = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/ai/recommendations');
-      const data = await response.json();
-      
-      if (response.ok) {
-        setRecommendations(data.recommendations || []);
-      } else {
-        setError(data.error || 'Failed to load recommendations');
-        showError('Error', data.error || 'Failed to load recommendations');
-      }
-    } catch {
-      setError('Failed to load recommendations');
-      showError('Error', 'Failed to load recommendations');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, fetchRecommendations]);
 
   if (!user) {
     return null; // Don't show for non-authenticated users
@@ -62,7 +64,9 @@ export default function AIRecommendations() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-400"></div>
-            <h2 className="text-2xl font-bold text-white">AI is analyzing your taste...</h2>
+            <h2 className="text-2xl font-bold text-white">
+              AI is analyzing your taste...
+            </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {[...Array(5)].map((_, i) => (
@@ -84,7 +88,9 @@ export default function AIRecommendations() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
             <div className="text-6xl mb-4">🤖</div>
-            <h2 className="text-2xl font-bold text-white mb-2">AI Recommendations</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              AI Recommendations
+            </h2>
             <p className="text-gray-400 mb-4">{error}</p>
             <button
               onClick={fetchRecommendations}
@@ -104,9 +110,12 @@ export default function AIRecommendations() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
             <div className="text-6xl mb-4">🎬</div>
-            <h2 className="text-2xl font-bold text-white mb-2">AI Recommendations</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              AI Recommendations
+            </h2>
             <p className="text-gray-400 mb-4">
-              Add some movies to your watchlist to get personalized AI recommendations!
+              Add some movies to your watchlist to get personalized AI
+              recommendations!
             </p>
             <Link
               href="/"
@@ -129,8 +138,12 @@ export default function AIRecommendations() {
             <FaBrain className="text-white text-xl" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">AI Recommendations</h2>
-            <p className="text-gray-400">Personalized picks based on your watchlist</p>
+            <h2 className="text-2xl font-bold text-white">
+              AI Recommendations
+            </h2>
+            <p className="text-gray-400">
+              Personalized picks based on your watchlist
+            </p>
           </div>
           <button
             onClick={fetchRecommendations}
@@ -161,7 +174,7 @@ export default function AIRecommendations() {
                     <span className="text-zinc-600 text-sm">No Image</span>
                   </div>
                 )}
-                
+
                 {/* Confidence Badge */}
                 <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-semibold flex items-center gap-1">
                   <FaBrain className="text-cyan-400" />
@@ -195,7 +208,7 @@ export default function AIRecommendations() {
                 <h3 className="text-sm font-semibold text-white truncate group-hover:text-cyan-400 transition-colors">
                   {movie.title}
                 </h3>
-                
+
                 {movie.release_date && (
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(movie.release_date).getFullYear()}
@@ -216,11 +229,11 @@ export default function AIRecommendations() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">
-            💡 These recommendations are powered by AI analysis of your watchlist preferences
+            💡 These recommendations are powered by AI analysis of your
+            watchlist preferences
           </p>
         </div>
       </div>
     </div>
   );
 }
-
