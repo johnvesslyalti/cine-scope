@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FaPlay, FaTimes, FaYoutube } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -25,13 +25,7 @@ export default function TrailerModal({ isOpen, onClose, movieId, movieTitle }: T
   const [loading, setLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
-  useEffect(() => {
-    if (isOpen && movieId) {
-      fetchVideos();
-    }
-  }, [isOpen, movieId]);
-
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/movies/${movieId}/videos`);
@@ -52,7 +46,13 @@ export default function TrailerModal({ isOpen, onClose, movieId, movieTitle }: T
     } finally {
       setLoading(false);
     }
-  };
+  }, [movieId]);
+
+  useEffect(() => {
+    if (isOpen && movieId) {
+      fetchVideos();
+    }
+  }, [isOpen, movieId, fetchVideos]);
 
   const handleVideoSelect = (video: Video) => {
     setSelectedVideo(video);
