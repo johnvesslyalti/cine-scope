@@ -12,7 +12,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  debug: true,
   callbacks: {
     async session({ session, user }) {
       // Attach user id to session
@@ -26,8 +25,8 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   session: {
-    strategy: "database", // ← no JWT, stores session in DB
+    strategy: "database", // stores session in DB instead of JWT
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true,
+  debug: true, // keep only once
 };
