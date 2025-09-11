@@ -1,14 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const { id } = context.params;
 
     if (!id) {
-      return NextResponse.json({ error: 'Movie ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Movie ID is required" },
+        { status: 400 }
+      );
     }
 
     const res = await fetch(
@@ -16,13 +19,19 @@ export async function GET(
     );
 
     if (!res.ok) {
-      return NextResponse.json({ error: 'TMDb request failed' }, { status: res.status });
+      return NextResponse.json(
+        { error: "TMDb request failed" },
+        { status: res.status }
+      );
     }
 
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Movie videos API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Movie videos API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
