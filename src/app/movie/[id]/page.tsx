@@ -19,16 +19,10 @@ import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
 import { useNotifications } from '@/components/Notification';
 import TrailerModal from '@/components/TrailerModal';
-import AIMovieAnalysis from '@/components/AIMovieAnalysis';
 import { TabKey, WatchlistItem } from '@/types';
 
 interface Genre { id: number; name: string; }
-interface CastMember {
-  id: number;
-  name: string;
-  character: string;
-  profile_path: string | null;
-}
+interface CastMember { id: number; name: string; character: string; profile_path: string | null; }
 interface MovieDetails {
   id: number;
   title: string;
@@ -56,6 +50,7 @@ export default function MovieDetails() {
   const { id } = useParams() as { id: string };
   const { user } = useAuth();
   const { showSuccess, showError } = useNotifications();
+
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
   const [similarMovies, setSimilarMovies] = useState<SimilarMovie[]>([]);
@@ -64,47 +59,55 @@ export default function MovieDetails() {
   const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'similar'>('overview');
   const [showTrailerModal, setShowTrailerModal] = useState(false);
 
-  // Debug logging
+  // Fetch movie data
   useEffect(() => {
-    console.log('MovieDetails - User state:', user);
-    console.log('MovieDetails - User authenticated:', !!user);
-  }, [user]);
+    let mounted = true;
 
-  useEffect(() => {
     const fetchMovieData = async () => {
+      setLoading(true);
       try {
         const [movieRes, castRes, similarRes] = await Promise.all([
           axios.get(TMDB_API.moviedetails(id)),
           axios.get(TMDB_API.moviecredits(id)),
-          axios.get(TMDB_API.similarmovies(id))
+          axios.get(TMDB_API.similarmovies(id)),
         ]);
-        
+
+        if (!mounted) return;
+
         setMovie(movieRes.data);
-        setCast(castRes.data.cast.slice(0, 10)); // Top 10 cast members
-        setSimilarMovies(similarRes.data.results.slice(0, 6)); // Top 6 similar movies
+        setCast(castRes.data.cast.slice(0, 10));
+        setSimilarMovies(similarRes.data.results.slice(0, 6));
       } catch (err) {
         console.error('Error fetching movie data:', err);
-        showError('Error', 'Failed to load movie details. Please try again.');
+        if (mounted) showError('Error', 'Failed to load movie details.');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
+    fetchMovieData();
+
+    return () => { mounted = false; };
+  }, [id]); // ✅ Only depend on `id`, stable
+
+  // Check if movie is in watchlist (only when user exists)
+  useEffect(() => {
+    if (!user) return;
+    let mounted = true;
+
     const checkWatchlist = async () => {
-      if (!user) return;
       try {
         const res = await axios.get('/api/watchlist');
-        setIsInWatchlist(
-          res.data.data.some((item: WatchlistItem) => item.movieId.toString() === id)
-        );
+        if (!mounted) return;
+        setIsInWatchlist(res.data.data.some((item: WatchlistItem) => item.movieId.toString() === id));
       } catch (err) {
         console.error('Failed to check watchlist:', err);
       }
     };
 
-    fetchMovieData();
     checkWatchlist();
-  }, [id, user, showError]);
+    return () => { mounted = false; };
+  }, [user, id]);
 
   const handleToggleWatchlist = async () => {
     if (!movie || !user) return;
@@ -125,14 +128,8 @@ export default function MovieDetails() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
 
   const formatRuntime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -140,35 +137,21 @@ export default function MovieDetails() {
     return `${hours}h ${mins}m`;
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-white text-xl">Loading movie details...</div>
-    </div>
-  );
-  
-  if (!movie) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-red-500 text-xl">Movie not found.</div>
-    </div>
-  );
+  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white text-xl">Loading movie details...</div>;
+  if (!movie) return <div className="min-h-screen bg-black flex items-center justify-center text-red-500 text-xl">Movie not found.</div>;
 
   return (
     <div className="relative min-h-screen text-white">
       {movie.backdrop_path && (
         <div className="absolute inset-0 -z-10">
-          <Image
-            src={TMDB_IMAGE(movie.backdrop_path, 'w1280')}
-            alt={`${movie.title} backdrop`}
-            fill
-            className="object-cover opacity-30 blur-sm"
-          />
+          <Image src={TMDB_IMAGE(movie.backdrop_path, 'w1280')} alt={`${movie.title} backdrop`} fill className="object-cover opacity-30 blur-sm" />
           <div className="absolute inset-0 bg-gradient-to-b from-black via-black/40 to-black" />
         </div>
       )}
 
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="flex flex-col lg:flex-row gap-10">
-          {/* Left Column - Poster and Basic Info */}
+          {/* Left Column - Poster and Actions */}
           <div className="flex-shrink-0">
             <div className="relative">
               <Image
@@ -203,14 +186,12 @@ export default function MovieDetails() {
             </div>
           </div>
 
-          {/* Right Column - Details */}
+          {/* Right Column - Movie Details */}
           <div className="flex-1 space-y-6">
             <div>
               <h1 className="text-4xl lg:text-5xl font-extrabold drop-shadow-lg">{movie.title}</h1>
               {movie.tagline && (
-                <p className="text-yellow-400 italic mt-2 text-lg">
-                  &ldquo;{movie.tagline}&rdquo;
-                </p>
+                <p className="text-yellow-400 italic mt-2 text-lg">&ldquo;{movie.tagline}&rdquo;</p>
               )}
             </div>
 
@@ -240,12 +221,7 @@ export default function MovieDetails() {
             <div className="flex items-center gap-2 flex-wrap">
               <FaFilm className="text-yellow-300" />
               {movie.genres?.map((g) => (
-                <span
-                  key={g.id}
-                  className="px-3 py-1 bg-white/10 rounded-full border border-white/20 text-xs"
-                >
-                  {g.name}
-                </span>
+                <span key={g.id} className="px-3 py-1 bg-white/10 rounded-full border border-white/20 text-xs">{g.name}</span>
               ))}
             </div>
 
@@ -267,7 +243,7 @@ export default function MovieDetails() {
               </div>
             )}
 
-            {/* Tab Navigation */}
+            {/* Tabs */}
             <div className="flex space-x-1 bg-white/10 rounded-lg p-1">
               {[
                 { key: 'overview', label: 'Overview', icon: FaEye },
@@ -293,21 +269,10 @@ export default function MovieDetails() {
             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6">
               {activeTab === 'overview' && (
                 <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-3">Overview</h2>
-                    <p className="text-gray-200 leading-relaxed">{movie.overview}</p>
-                  </div>
-                  
-                  {/* AI Movie Analysis */}
-                  <AIMovieAnalysis
-                    movieId={id}
-                    title={movie.title}
-                    overview={movie.overview}
-                    genres={movie.genres?.map(g => g.name) || []}
-                  />
+                  <h2 className="text-2xl font-semibold mb-3">Overview</h2>
+                  <p className="text-gray-200 leading-relaxed">{movie.overview}</p>
                 </div>
               )}
-
               {activeTab === 'cast' && (
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Cast</h2>
@@ -335,17 +300,12 @@ export default function MovieDetails() {
                   </div>
                 </div>
               )}
-
               {activeTab === 'similar' && (
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Similar Movies</h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {similarMovies.map((similar) => (
-                      <a
-                        key={similar.id}
-                        href={`/movie/${similar.id}`}
-                        className="group block"
-                      >
+                      <a key={similar.id} href={`/movie/${similar.id}`} className="group block">
                         <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-2">
                           {similar.poster_path ? (
                             <Image
@@ -361,9 +321,7 @@ export default function MovieDetails() {
                           )}
                         </div>
                         <div className="text-sm font-semibold truncate">{similar.title}</div>
-                        <div className="text-xs text-gray-400">
-                          {similar.vote_average.toFixed(1)} ⭐
-                        </div>
+                        <div className="text-xs text-gray-400">{similar.vote_average.toFixed(1)} ⭐</div>
                       </a>
                     ))}
                   </div>
