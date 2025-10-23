@@ -95,7 +95,7 @@ export default function SearchClient() {
       setSearchHistory(newHistory);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
     }
-  }, [searchHistory, query, currentPage, genreFilter, yearFilter, ratingFilter]);
+  }, [query, currentPage, genreFilter, yearFilter, ratingFilter]);
 
   const handleFilterChange = (filterType: string, value: string) => {
     const params = new URLSearchParams(searchParams);
