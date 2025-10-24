@@ -1,11 +1,8 @@
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { GoogleGenAI } from "@google/genai";
+import { prisma } from "./prisma";
 
 export interface MovieRecommendation {
-  movieId: string;
+  movieId?: string; // Gemini won’t return TMDB id directly
   title: string;
   reason: string;
   confidence: number;
@@ -25,239 +22,158 @@ export interface AISearchSuggestion {
   confidence: number;
 }
 
-export class AIService {
-  // Generate personalized movie recommendations based on user's watchlist
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+
+export class AIServiceGemini {
+
+  // Fetch user watchlist and generate recommendations
   static async getPersonalizedRecommendations(
-    watchlistMovies: Array<{ title: string; genre_ids: number[] }>,
+    userId: string,
     userPreferences?: string
   ): Promise<MovieRecommendation[]> {
     try {
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error('OpenAI API key not configured');
-      }
-
-      const watchlistTitles = watchlistMovies.map(m => m.title).join(', ');
-      
-      const prompt = `
-        Based on the following movies in the user's watchlist: ${watchlistTitles}
-        ${userPreferences ? `User preferences: ${userPreferences}` : ''}
-        
-        Please recommend 5 movies that the user would likely enjoy. For each recommendation:
-        1. Provide a movie title that exists in TMDB database
-        2. Give a brief reason why this movie would appeal to them
-        3. Rate your confidence (1-10) in this recommendation
-        
-        Format your response as JSON:
-        {
-          "recommendations": [
-            {
-              "title": "Movie Title",
-              "reason": "Brief explanation",
-              "confidence": 8
-            }
-          ]
-        }
-      `;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
+      // 1️⃣ Fetch watchlist from DB
+      const watchlist = await prisma.watchlist.findMany({
+        where: { userId },
       });
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) throw new Error('No response from AI');
+      if (!watchlist.length) return [];
 
-      const parsed = JSON.parse(response);
+      // 2️⃣ Map to AI format
+      const watchlistTitles = watchlist.map(item => item.title).join(", ");
+
+      // 3️⃣ Generate prompt
+      const prompt = `
+        Based on these movies: ${watchlistTitles}
+        ${userPreferences ? `User preferences: ${userPreferences}` : ""}
+
+        Recommend 5 movies the user might enjoy. Include:
+        - title
+        - reason
+        - confidence (1-10)
+
+        Format as JSON:
+        { "recommendations": [{ "title": "...", "reason": "...", "confidence": 8 }] }
+      `;
+
+      // 4️⃣ Call Gemini
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      const parsed = JSON.parse(response.text ?? "{}");
       return parsed.recommendations || [];
-    } catch (error) {
-      console.error('Error generating recommendations:', error);
+    } catch (err) {
+      console.error("Gemini recommendation error:", err);
       return [];
     }
   }
 
-  // Generate enhanced movie descriptions
+  // Generate movie description
   static async generateMovieDescription(
     title: string,
     overview: string,
     genres: string[],
     releaseYear: number
   ): Promise<string> {
+    const prompt = `
+      Create a 2-3 sentence engaging movie description for "${title ?? ""}" (${releaseYear}).
+      Original overview: ${overview ?? ""}
+      Genres: ${genres.join(", ")}
+    `;
+
     try {
-      if (!process.env.OPENAI_API_KEY) {
-        return overview; // Fallback to original overview
-      }
-
-      const prompt = `
-        Create an engaging, detailed movie description for "${title}" (${releaseYear}).
-        
-        Original overview: ${overview}
-        Genres: ${genres.join(', ')}
-        
-        Write a compelling 2-3 sentence description that:
-        - Captures the essence and appeal of the movie
-        - Highlights what makes it special
-        - Uses engaging language that would make someone want to watch it
-        - Maintains accuracy to the original content
-        
-        Keep it concise but impactful.
-      `;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 150,
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
       });
-
-      return completion.choices[0]?.message?.content || overview;
-    } catch (error) {
-      console.error('Error generating description:', error);
-      return overview; // Fallback to original overview
+      return response.text ?? overview;
+    } catch (err) {
+      console.error("Gemini description error:", err);
+      return overview;
     }
   }
 
-  // Analyze movie content and provide insights
+  // Analyze movie content
   static async analyzeMovie(
     title: string,
     overview: string,
     genres: string[]
   ): Promise<MovieAnalysis> {
-    try {
-      if (!process.env.OPENAI_API_KEY) {
-        return {
-          sentiment: 'neutral',
-          themes: [],
-          targetAudience: 'General',
-          contentWarnings: [],
-          summary: overview
-        };
+    const prompt = `
+      Analyze the movie "${title ?? ""}" with overview: ${overview ?? ""} and genres: ${genres.join(", ")}.
+      Provide JSON:
+      {
+        "sentiment": "positive/negative/neutral",
+        "themes": ["theme1", "theme2"],
+        "targetAudience": "audience description",
+        "contentWarnings": ["warning1"],
+        "summary": "brief summary"
       }
+    `;
 
-      const prompt = `
-        Analyze the movie "${title}" with the following information:
-        Overview: ${overview}
-        Genres: ${genres.join(', ')}
-        
-        Provide analysis in JSON format:
-        {
-          "sentiment": "positive/negative/neutral",
-          "themes": ["theme1", "theme2", "theme3"],
-          "targetAudience": "description of ideal audience",
-          "contentWarnings": ["warning1", "warning2"],
-          "summary": "brief analysis summary"
-        }
-      `;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
       });
-
-      const response = completion.choices[0]?.message?.content;
-      if (!response) throw new Error('No response from AI');
-
-      return JSON.parse(response);
-    } catch (error) {
-      console.error('Error analyzing movie:', error);
+      return JSON.parse(response.text ?? "{}") as MovieAnalysis;
+    } catch (err) {
+      console.error("Gemini analysis error:", err);
       return {
-        sentiment: 'neutral',
+        sentiment: "neutral",
         themes: [],
-        targetAudience: 'General',
+        targetAudience: "General",
         contentWarnings: [],
-        summary: overview
+        summary: overview,
       };
     }
   }
 
-  // Generate AI-powered search suggestions
+  // AI search suggestions
   static async getSearchSuggestions(
     query: string,
     searchHistory: string[]
   ): Promise<AISearchSuggestion[]> {
+    const prompt = `
+      Based on search query "${query ?? ""}" and history: ${searchHistory.join(", ")},
+      provide 3-5 suggestions in JSON:
+      { "suggestions": [{"query": "term", "type": "genre", "confidence": 8}] }
+    `;
+
     try {
-      if (!process.env.OPENAI_API_KEY) {
-        return [];
-      }
-
-      const prompt = `
-        Based on the search query "${query}" and recent search history: ${searchHistory.join(', ')}
-        
-        Generate 3-5 search suggestions that would help the user find movies. Consider:
-        - Genre-specific searches
-        - Mood-based searches
-        - Actor/director searches
-        - Year-based searches
-        
-        Format as JSON:
-        {
-          "suggestions": [
-            {
-              "query": "search term",
-              "type": "genre/mood/actor/director/year/general",
-              "confidence": 8
-            }
-          ]
-        }
-      `;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
       });
-
-      const response = completion.choices[0]?.message?.content;
-      if (!response) throw new Error('No response from AI');
-
-      const parsed = JSON.parse(response);
+      const parsed = JSON.parse(response.text ?? "{}");
       return parsed.suggestions || [];
-    } catch (error) {
-      console.error('Error generating search suggestions:', error);
+    } catch (err) {
+      console.error("Gemini search suggestion error:", err);
       return [];
     }
   }
 
-  // Natural language search processing
+  // Natural language search
   static async processNaturalLanguageSearch(
     query: string
   ): Promise<{ searchTerm: string; filters: Record<string, string> }> {
+    const prompt = `
+      Process this search query: "${query ?? ""}".
+      Extract main search term and filters (genre, year, rating) in JSON:
+      { "searchTerm": "term", "filters": {"genre": "action"} }
+    `;
+
     try {
-      if (!process.env.OPENAI_API_KEY) {
-        return { searchTerm: query, filters: {} };
-      }
-
-      const prompt = `
-        Process this natural language movie search query: "${query}"
-        
-        Extract the search term and any filters (genre, year, rating, etc.)
-        
-        Return as JSON:
-        {
-          "searchTerm": "main search term",
-          "filters": {
-            "genre": "action",
-            "year": 2020,
-            "rating": 8
-          }
-        }
-      `;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
       });
-
-      const response = completion.choices[0]?.message?.content;
-      if (!response) throw new Error('No response from AI');
-
-      return JSON.parse(response);
-    } catch (error) {
-      console.error('Error processing natural language search:', error);
+      return JSON.parse(response.text ?? "{}");
+    } catch (err) {
+      console.error("Gemini NL search error:", err);
       return { searchTerm: query, filters: {} };
     }
   }
 }
-

@@ -1,5 +1,5 @@
+import { AIServiceGemini } from '@/lib/ai';
 import { NextRequest, NextResponse } from 'next/server';
-import { AIService } from '@/lib/ai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const analysis = await AIService.analyzeMovie(title, overview, genres || []);
+    const analysis = await AIServiceGemini.analyzeMovie(title, overview, genres || []);
 
     return NextResponse.json({
       success: true,

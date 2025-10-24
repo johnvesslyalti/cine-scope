@@ -1,5 +1,5 @@
+import { AIServiceGemini } from '@/lib/ai';
 import { NextRequest, NextResponse } from 'next/server';
-import { AIService } from '@/lib/ai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const suggestions = await AIService.getSearchSuggestions(query, searchHistory);
+    const suggestions = await AIServiceGemini.getSearchSuggestions(query, searchHistory);
 
     return NextResponse.json({
       success: true,
