@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// ------------------- Interfaces -------------------
 export interface MovieRecommendation {
   movieId?: string;
   title: string;
@@ -22,29 +23,29 @@ export interface AISearchSuggestion {
   confidence: number;
 }
 
-// ✅ Initialize Gemini client (fail-fast on missing key)
+// ------------------- Setup Gemini -------------------
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const GEMINI_MODEL = "gemini-2.0-flash-exp"; // Latest model
 
 if (!GEMINI_API_KEY) {
   console.error("❌ Missing GEMINI_API_KEY in environment variables");
 }
 
-const ai = new GoogleGenerativeAI(GEMINI_API_KEY || "");
+// ✅ Latest initialization for @google/generative-ai SDK
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
-function ensureGeminiConfigured() {
+function ensureGeminiConfigured(): void {
   if (!GEMINI_API_KEY) {
-    const error = new Error("GEMINI_NOT_CONFIGURED: Missing GEMINI_API_KEY");
-    // Avoid noisy stack traces in logs; the message is enough for handlers
-    throw error;
+    throw new Error("GEMINI_NOT_CONFIGURED: Missing GEMINI_API_KEY");
   }
 }
 
-// ✅ Helper to safely parse Gemini responses
+// ------------------- Safe JSON Parser -------------------
 function safeParseJSON<T>(text: string | undefined, fallback: T): T {
   if (!text) return fallback;
 
-  const stripFences = (t: string) => t.replace(/```(?:json)?/g, "").trim();
+  const stripFences = (t: string): string =>
+    t.replace(/```(?:json)?/g, "").trim();
 
   const tryBalancedExtraction = (t: string): string | null => {
     const s = stripFences(t);
@@ -67,53 +68,86 @@ function safeParseJSON<T>(text: string | undefined, fallback: T): T {
   try {
     const cleaned = stripFences(text);
     return JSON.parse(cleaned) as T;
-  } catch (_) {
+  } catch (error: unknown) {
     try {
       const extracted = tryBalancedExtraction(text);
       if (extracted) {
         return JSON.parse(extracted) as T;
       }
     } catch (err2) {
-      console.error("❌ Failed to parse Gemini JSON (extracted):", err2);
+      console.error("❌ Failed to parse Gemini JSON (extracted):", error, err2);
     }
     console.error("❌ Failed to parse Gemini JSON (raw):", text);
     return fallback;
   }
 }
 
-// ✅ Gemini API call with retry logic
+// ------------------- Gemini API Wrapper -------------------
 async function callGeminiWithRetry<T>(
   prompt: string,
-  modelName = GEMINI_MODEL,
   maxRetries = 2
 ): Promise<T> {
-  // Fail fast if not configured
   ensureGeminiConfigured();
 
-  const model = ai.getGenerativeModel({ model: modelName });
+  const model = genAI.getGenerativeModel({
+    model: GEMINI_MODEL,
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.95,
+      topK: 40,
+      maxOutputTokens: 2048,
+    },
+  });
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`🤖 Sending request to Gemini (attempt ${attempt})...`);
-      const result = await model.generateContent(prompt);
 
-      const text = result.response.text();
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
+
+      console.log("🧠 Gemini raw text:", text);
+
+      if (!text) {
+        console.error(
+          "⚠️ Empty response from Gemini:",
+          JSON.stringify(result, null, 2)
+        );
+      }
+
       return safeParseJSON<T>(text, {} as T);
     } catch (err: unknown) {
-      const error = err as { status?: string; message?: string };
-      const status = (error?.status || error?.message || "unknown").toString();
-      console.error(`⚠️ Gemini API error (attempt ${attempt}):`, status);
+      const error = err as {
+        status?: number | string;
+        message?: string;
+        statusText?: string;
+      };
+      const status = (
+        error?.status ||
+        error?.statusText ||
+        error?.message ||
+        "unknown"
+      ).toString();
+      console.error(
+        `⚠️ Gemini API error (attempt ${attempt}):`,
+        status,
+        error?.message
+      );
 
-      const isRateLimited = status.includes("429") || status.includes("RESOURCE_EXHAUSTED");
+      const isRateLimited =
+        status.includes("429") ||
+        status.includes("RESOURCE_EXHAUSTED") ||
+        error?.message?.includes("quota");
+
       const isAuthOrConfig =
         status.includes("401") ||
+        status.includes("403") ||
         status.toLowerCase().includes("invalid") ||
-        status.includes("GEMINI_NOT_CONFIGURED");
+        status.includes("GEMINI_NOT_CONFIGURED") ||
+        error?.message?.toLowerCase().includes("api key");
 
-      if (isAuthOrConfig) {
-        // Do not retry configuration/auth errors
-        throw err;
-      }
+      if (isAuthOrConfig) throw err;
 
       if (isRateLimited && attempt < maxRetries) {
         const delay = 5 * attempt;
@@ -122,17 +156,16 @@ async function callGeminiWithRetry<T>(
         continue;
       }
 
-      if (attempt === maxRetries) {
-        throw err;
-      }
+      if (attempt === maxRetries) throw err;
     }
   }
 
   return {} as T;
 }
 
+// ------------------- AI Service -------------------
 export class AIServiceGemini {
-  // 🧠 Personalized movie recommendations
+  // 🎬 Personalized recommendations
   static async getPersonalizedRecommendations(
     userId: string,
     userPreferences?: string
@@ -148,23 +181,17 @@ export class AIServiceGemini {
       ${userPreferences ? `User preferences: ${userPreferences}` : ""}
 
       Recommend 5 movies the user might enjoy.
-      Return valid JSON only in this format:
-
-      {
-        "recommendations": [
-          { "title": "Movie Title", "reason": "Because...", "confidence": 8 }
-        ]
-      }
+      Return valid JSON only:
+      { "recommendations": [{ "title": "Movie", "reason": "Because...", "confidence": 8 }] }
     `;
 
     const result = await callGeminiWithRetry<{
       recommendations: MovieRecommendation[];
     }>(prompt);
-
     return result.recommendations ?? [];
   }
 
-  // 🎬 Generate short movie description
+  // 📝 Generate short movie description
   static async generateMovieDescription(
     title: string,
     overview: string,
@@ -172,40 +199,37 @@ export class AIServiceGemini {
     releaseYear: number
   ): Promise<string> {
     const prompt = `
-      Create a short, engaging 2-3 sentence description for the movie "${title}" (${releaseYear}).
-      Use this overview: ${overview}
+      Create a short, engaging 2–3 sentence description for "${title}" (${releaseYear}).
+      Overview: ${overview}
       Genres: ${genres.join(", ")}
-      
-      Respond in JSON:
-      { "description": "..." }
+      Respond in JSON: { "description": "..." }
     `;
 
     const result = await callGeminiWithRetry<{ description: string }>(prompt);
     return result.description ?? overview;
   }
 
-  // 🔍 Analyze movie details
+  // 🔍 Analyze movie tone, themes, etc.
   static async analyzeMovie(
     title: string,
     overview: string,
     genres: string[]
   ): Promise<MovieAnalysis> {
     const prompt = `
-      Analyze the movie "${title}" with overview: ${overview} and genres: ${genres.join(
-      ", "
-    )}.
+      Analyze the movie "${title}".
+      Overview: ${overview}
+      Genres: ${genres.join(", ")}
       Respond strictly as JSON:
       {
         "sentiment": "positive" | "negative" | "neutral",
-        "themes": ["theme1", "theme2"],
-        "targetAudience": "audience description",
-        "contentWarnings": ["warning1"],
+        "themes": ["theme1"],
+        "targetAudience": "audience",
+        "contentWarnings": ["warning"],
         "summary": "brief summary"
       }
     `;
 
     const result = await callGeminiWithRetry<MovieAnalysis>(prompt);
-
     return {
       sentiment: result.sentiment ?? "neutral",
       themes: result.themes ?? [],
@@ -215,45 +239,33 @@ export class AIServiceGemini {
     };
   }
 
-  // 🔎 Search suggestions
+  // 🧭 Search suggestions based on history
   static async getSearchSuggestions(
     query: string,
     searchHistory: string[]
   ): Promise<AISearchSuggestion[]> {
     const prompt = `
-      Based on search query "${query}" and search history: ${searchHistory.join(
-      ", "
-    )},
-      provide 3-5 search suggestions.
-
+      Based on query "${query}" and history: ${searchHistory.join(", ")},
+      suggest 3–5 related searches.
       Respond as JSON:
-      {
-        "suggestions": [
-          { "query": "term", "type": "genre", "confidence": 9 }
-        ]
-      }
+      { "suggestions": [{ "query": "term", "type": "genre", "confidence": 9 }] }
     `;
 
     const result = await callGeminiWithRetry<{
       suggestions: AISearchSuggestion[];
     }>(prompt);
-
     return result.suggestions ?? [];
   }
 
-  // 💬 Process natural language search
+  // 🗣️ Process natural language searches
   static async processNaturalLanguageSearch(
     query: string
   ): Promise<{ searchTerm: string; filters: Record<string, string> }> {
     const prompt = `
-      Process this search query: "${query}".
-      Extract main search term and filters (genre, year, rating).
-
+      Process this search: "${query}".
+      Extract main term and filters (genre, year, etc).
       Respond strictly as JSON:
-      {
-        "searchTerm": "term",
-        "filters": { "genre": "action" }
-      }
+      { "searchTerm": "term", "filters": { "genre": "action" } }
     `;
 
     const result = await callGeminiWithRetry<{

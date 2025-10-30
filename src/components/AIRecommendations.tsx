@@ -4,7 +4,7 @@ import { useNotifications } from "./Notification";
 import { useAuth } from "@/store/useAuth";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { FaBrain, FaStar, FaEye } from "react-icons/fa";
 
 interface AIRecommendation {
@@ -23,12 +23,14 @@ export default function AIRecommendations() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cacheMessage, setCacheMessage] = useState<string>("");
   const { user } = useAuth();
-  const { showError } = useNotifications();
+  const { showError, showSuccess } = useNotifications();
 
   const fetchRecommendations = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setCacheMessage("");
 
     try {
       const response = await fetch("/api/ai/recommendations");
@@ -36,17 +38,60 @@ export default function AIRecommendations() {
 
       if (response.ok) {
         setRecommendations(data.recommendations || []);
+
+        // Show cache/fallback messages
+        if (data.cached) {
+          setCacheMessage("Using cached recommendations");
+        } else if (data.fallback) {
+          setCacheMessage(data.message || "Using TMDB recommendations");
+        } else if (data.message) {
+          setCacheMessage(data.message);
+        }
+
+        if (data.recommendations?.length > 0) {
+          showSuccess(
+            "Success",
+            `Found ${data.recommendations.length} recommendations for you!`
+          );
+        }
       } else {
-        setError(data.error || "Failed to load recommendations");
-        showError("Error", data.error || "Failed to load recommendations");
+        const errorMsg = data.error || "Failed to load recommendations";
+        setError(errorMsg);
+
+        // Check if it's a rate limit error
+        if (
+          data.isRateLimit ||
+          errorMsg.includes("rate limit") ||
+          errorMsg.includes("quota")
+        ) {
+          showError(
+            "Rate Limit Reached",
+            "AI service temporarily unavailable. Please try again in a few minutes."
+          );
+        } else {
+          showError("Error", errorMsg);
+        }
       }
-    } catch {
-      setError("Failed to load recommendations");
-      showError("Error", "Failed to load recommendations");
+    } catch (err) {
+      const errorMsg = "Failed to load recommendations";
+      setError(errorMsg);
+      showError("Error", errorMsg);
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, [showError, showSuccess]);
+
+  // Deduplicate recommendations on the client side as a safety measure
+  const uniqueRecommendations = useMemo(() => {
+    const seen = new Set<string>();
+    return recommendations.filter((movie) => {
+      if (!movie.movieId || seen.has(movie.movieId)) {
+        return false;
+      }
+      seen.add(movie.movieId);
+      return true;
+    });
+  }, [recommendations]);
 
   useEffect(() => {
     if (user) {
@@ -70,7 +115,7 @@ export default function AIRecommendations() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse">
+              <div key={`skeleton-${i}`} className="animate-pulse">
                 <div className="bg-zinc-800 rounded-lg h-64 mb-2"></div>
                 <div className="bg-zinc-800 rounded h-4 mb-1"></div>
                 <div className="bg-zinc-800 rounded h-3 w-2/3"></div>
@@ -104,7 +149,7 @@ export default function AIRecommendations() {
     );
   }
 
-  if (recommendations.length === 0) {
+  if (uniqueRecommendations.length === 0) {
     return (
       <div className="py-12 bg-gradient-to-b from-zinc-900 to-black">
         <div className="max-w-7xl mx-auto px-4">
@@ -137,27 +182,31 @@ export default function AIRecommendations() {
           <div className="p-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg">
             <FaBrain className="text-white text-xl" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold text-white">
               AI Recommendations
             </h2>
             <p className="text-gray-400">
               Personalized picks based on your watchlist
             </p>
+            {cacheMessage && (
+              <p className="text-cyan-400 text-sm mt-1">ℹ️ {cacheMessage}</p>
+            )}
           </div>
           <button
             onClick={fetchRecommendations}
-            className="ml-auto px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition text-sm"
+            disabled={loading}
+            className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Refresh
+            {loading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
 
         {/* Recommendations Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {recommendations.map((movie) => (
+          {uniqueRecommendations.map((movie, index) => (
             <div
-              key={movie.movieId}
+              key={`movie-${movie.movieId}-${index}`}
               className="group relative bg-zinc-900 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               {/* Movie Poster */}
@@ -168,6 +217,7 @@ export default function AIRecommendations() {
                     alt={movie.title}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   />
                 ) : (
                   <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
@@ -217,7 +267,7 @@ export default function AIRecommendations() {
 
                 {/* AI Reason */}
                 <div className="mt-2 p-2 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-300 leading-relaxed">
+                  <p className="text-xs text-gray-300 leading-relaxed line-clamp-3">
                     {movie.reason}
                   </p>
                 </div>
