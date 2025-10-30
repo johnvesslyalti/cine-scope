@@ -1,11 +1,17 @@
 "use client";
 
+import AISearchAssistant from "@/components/AISearchAssistant";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { FaFilter, FaHistory, FaStar, FaCalendarAlt, FaTimes } from "react-icons/fa";
-import AISearchAssistant from "@/components/AISearchAssistant";
+import { useEffect, useState, useCallback } from "react";
+import {
+  FaFilter,
+  FaHistory,
+  FaStar,
+  FaCalendarAlt,
+  FaTimes,
+} from "react-icons/fa";
 
 interface Movie {
   id: number;
@@ -25,11 +31,18 @@ export default function SearchClient() {
   const [results, setResults] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    // Initialize from localStorage on mount
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("searchHistory");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get("q") || "";
@@ -37,37 +50,54 @@ export default function SearchClient() {
   const yearFilter = searchParams.get("year") || "";
   const ratingFilter = searchParams.get("rating") || "";
 
-  // Load search history from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('searchHistory');
-    if (saved) {
-      setSearchHistory(JSON.parse(saved));
-    }
-  }, []);
-
   // Load genres
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const res = await fetch('/api/genres');
+        const res = await fetch("/api/genres");
         const data = await res.json();
         setGenres(data);
       } catch (error) {
-        console.error('Failed to fetch genres:', error);
+        console.error("Failed to fetch genres:", error);
       }
     };
     fetchGenres();
   }, []);
 
+  // Update search history when query changes
   useEffect(() => {
-    if (!query) return;
+    if (query.trim()) {
+      setSearchHistory((prevHistory) => {
+        const newHistory = [
+          query,
+          ...prevHistory.filter((h) => h !== query),
+        ].slice(0, 10);
+        // Persist to localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+        }
+        return newHistory;
+      });
+    }
+  }, [query]);
 
-    setLoading(true);
-    const searchUrl = `/api/search?query=${encodeURIComponent(query)}&page=${currentPage}&genre=${genreFilter}&year=${yearFilter}&rating=${ratingFilter}`;
-    
-    fetch(searchUrl)
-      .then(async (res) => {
+  // Perform search
+  useEffect(() => {
+    if (!query) {
+      setResults([]);
+      return;
+    }
+
+    const searchMovies = async () => {
+      setLoading(true);
+      try {
+        const searchUrl = `/api/search?query=${encodeURIComponent(
+          query
+        )}&page=${currentPage}&genre=${genreFilter}&year=${yearFilter}&rating=${ratingFilter}`;
+
+        const res = await fetch(searchUrl);
         const text = await res.text();
+
         try {
           const data = JSON.parse(text);
           if (data.results && Array.isArray(data.results)) {
@@ -86,39 +116,51 @@ export default function SearchClient() {
           setResults([]);
           setTotalPages(0);
         }
-      })
-      .finally(() => setLoading(false));
+      } catch (error) {
+        console.error("Search failed:", error);
+        setResults([]);
+        setTotalPages(0);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Add to search history
-    if (query.trim()) {
-      const newHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 10);
-      setSearchHistory(newHistory);
-      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-    }
+    searchMovies();
   }, [query, currentPage, genreFilter, yearFilter, ratingFilter]);
 
-  const handleFilterChange = (filterType: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (value) {
-      params.set(filterType, value);
-    } else {
-      params.delete(filterType);
-    }
-    params.set('page', '1');
-    setCurrentPage(1);
-    router.push(`/search?${params.toString()}`);
-  };
+  const handleFilterChange = useCallback(
+    (filterType: string, value: string) => {
+      const params = new URLSearchParams(searchParams);
+      if (value) {
+        params.set(filterType, value);
+      } else {
+        params.delete(filterType);
+      }
+      params.set("page", "1");
+      setCurrentPage(1);
+      router.push(`/search?${params.toString()}`);
+    },
+    [searchParams, router]
+  );
 
-  const handleHistoryClick = (historyQuery: string) => {
-    router.push(`/search?q=${encodeURIComponent(historyQuery)}`);
-  };
+  const handleHistoryClick = useCallback(
+    (historyQuery: string) => {
+      router.push(`/search?q=${encodeURIComponent(historyQuery)}`);
+    },
+    [router]
+  );
 
-  const clearHistory = () => {
+  const clearHistory = useCallback(() => {
     setSearchHistory([]);
-    localStorage.removeItem('searchHistory');
-  };
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("searchHistory");
+    }
+  }, []);
 
-  const years = Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i);
+  const years = Array.from(
+    { length: 30 },
+    (_, i) => new Date().getFullYear() - i
+  );
   const ratings = [9, 8, 7, 6, 5, 4, 3, 2, 1];
 
   return (
@@ -129,14 +171,16 @@ export default function SearchClient() {
           <h1 className="text-3xl md:text-4xl font-extrabold">
             {query ? `Search Results for "${query}"` : "Search Movies"}
           </h1>
-          
+
           <div className="flex gap-2">
-            <AISearchAssistant 
-              onSearch={(query) => router.push(`/search?q=${encodeURIComponent(query)}`)}
+            <AISearchAssistant
+              onSearch={(query) =>
+                router.push(`/search?q=${encodeURIComponent(query)}`)
+              }
               currentQuery={query}
               searchHistory={searchHistory}
             />
-            
+
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"
@@ -144,7 +188,7 @@ export default function SearchClient() {
               <FaFilter />
               Filters
             </button>
-            
+
             {searchHistory.length > 0 && (
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -166,7 +210,7 @@ export default function SearchClient() {
                 <label className="block text-sm font-medium mb-2">Genre</label>
                 <select
                   value={genreFilter}
-                  onChange={(e) => handleFilterChange('genre', e.target.value)}
+                  onChange={(e) => handleFilterChange("genre", e.target.value)}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
                 >
                   <option value="">All Genres</option>
@@ -183,7 +227,7 @@ export default function SearchClient() {
                 <label className="block text-sm font-medium mb-2">Year</label>
                 <select
                   value={yearFilter}
-                  onChange={(e) => handleFilterChange('year', e.target.value)}
+                  onChange={(e) => handleFilterChange("year", e.target.value)}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
                 >
                   <option value="">All Years</option>
@@ -197,10 +241,12 @@ export default function SearchClient() {
 
               {/* Rating Filter */}
               <div>
-                <label className="block text-sm font-medium mb-2">Min Rating</label>
+                <label className="block text-sm font-medium mb-2">
+                  Min Rating
+                </label>
                 <select
                   value={ratingFilter}
-                  onChange={(e) => handleFilterChange('rating', e.target.value)}
+                  onChange={(e) => handleFilterChange("rating", e.target.value)}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
                 >
                   <option value="">Any Rating</option>
@@ -265,7 +311,9 @@ export default function SearchClient() {
         ) : results.length === 0 ? (
           <div className="flex justify-center items-center h-60">
             <div className="text-gray-400 text-lg text-center">
-              {query ? "No movies found matching your criteria." : "Enter a search term to find movies."}
+              {query
+                ? "No movies found matching your criteria."
+                : "Enter a search term to find movies."}
             </div>
           </div>
         ) : (
@@ -291,14 +339,14 @@ export default function SearchClient() {
                         No Image
                       </div>
                     )}
-                    
+
                     {/* Rating Badge */}
                     <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-semibold flex items-center gap-1">
                       <FaStar className="text-yellow-400" />
                       {movie.vote_average.toFixed(1)}
                     </div>
                   </div>
-                  
+
                   <div className="p-3">
                     <h2 className="text-sm font-semibold truncate group-hover:text-yellow-400 transition">
                       {movie.title}
@@ -317,23 +365,23 @@ export default function SearchClient() {
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
                   onClick={() => {
-                    setCurrentPage(prev => Math.max(1, prev - 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setCurrentPage((prev) => Math.max(1, prev - 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   disabled={currentPage === 1}
                   className="px-4 py-2 bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition"
                 >
                   Previous
                 </button>
-                
+
                 <span className="px-4 py-2">
                   Page {currentPage} of {totalPages}
                 </span>
-                
+
                 <button
                   onClick={() => {
-                    setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition"
