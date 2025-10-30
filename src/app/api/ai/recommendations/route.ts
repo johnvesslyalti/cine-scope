@@ -4,9 +4,39 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
+// ------------------- Types -------------------
+interface WatchlistItem {
+  movieId: string;
+  title: string;
+  createdAt: Date;
+  userId: string;
+}
+
+interface Recommendation {
+  movieId?: string;
+  title: string;
+  reason?: string;
+  confidence?: number;
+  poster_path?: string | null;
+  release_date?: string;
+  vote_average?: number;
+}
+
+interface TMDBMovie {
+  id: number;
+  title: string;
+  poster_path?: string | null;
+  release_date?: string;
+  vote_average?: number;
+}
+
+interface TMDBSearchResponse {
+  results: TMDBMovie[];
+}
+
 // ------------------- In-Memory Cache -------------------
 interface CacheEntry {
-  data: any[];
+  data: Recommendation[];
   timestamp: number;
   userId: string;
 }
@@ -19,47 +49,58 @@ function getCacheKey(userId: string, watchlistHash: string): string {
   return `${userId}-${watchlistHash}`;
 }
 
-function getWatchlistHash(watchlist: any[]): string {
+function getWatchlistHash(watchlist: WatchlistItem[]): string {
   // Create a simple hash from movieIds to detect watchlist changes
   return watchlist
-    .map(item => item.movieId)
+    .map((item) => item.movieId)
     .sort()
-    .join(',');
+    .join(",");
 }
 
-function getCachedRecommendations(userId: string, watchlistHash: string): any[] | null {
+function getCachedRecommendations(
+  userId: string,
+  watchlistHash: string
+): Recommendation[] | null {
   const cacheKey = getCacheKey(userId, watchlistHash);
   const cached = recommendationsCache.get(cacheKey);
-  
+
   if (!cached) return null;
-  
+
   const now = Date.now();
   const age = now - cached.timestamp;
-  
+
   // Check if cache is still valid
   if (age < CACHE_DURATION) {
-    console.log(`✅ Using cached recommendations (age: ${Math.round(age / 1000)}s)`);
+    console.log(
+      `✅ Using cached recommendations (age: ${Math.round(age / 1000)}s)`
+    );
     return cached.data;
   }
-  
+
   // Check rate limit
   if (age < MIN_REQUEST_INTERVAL) {
     const waitTime = Math.ceil((MIN_REQUEST_INTERVAL - age) / 1000);
-    console.log(`⏳ Rate limited. Please wait ${waitTime}s before requesting again.`);
+    console.log(
+      `⏳ Rate limited. Please wait ${waitTime}s before requesting again.`
+    );
     return cached.data; // Return stale cache rather than failing
   }
-  
+
   return null;
 }
 
-function setCachedRecommendations(userId: string, watchlistHash: string, data: any[]): void {
+function setCachedRecommendations(
+  userId: string,
+  watchlistHash: string,
+  data: Recommendation[]
+): void {
   const cacheKey = getCacheKey(userId, watchlistHash);
   recommendationsCache.set(cacheKey, {
     data,
     timestamp: Date.now(),
     userId,
   });
-  
+
   // Clean up old cache entries (older than 1 hour)
   const oneHourAgo = Date.now() - 60 * 60 * 1000;
   for (const [key, entry] of recommendationsCache.entries()) {
@@ -70,7 +111,7 @@ function setCachedRecommendations(userId: string, watchlistHash: string, data: a
 }
 
 // ------------------- Helper Functions -------------------
-function deduplicateByMovieId(movies: any[]): any[] {
+function deduplicateByMovieId(movies: Recommendation[]): Recommendation[] {
   const seen = new Set<string>();
   return movies.filter((movie) => {
     const id = movie.movieId?.toString();
@@ -80,19 +121,22 @@ function deduplicateByMovieId(movies: any[]): any[] {
   });
 }
 
-async function fetchTMDBWithRetry(url: string, retries = 3): Promise<Response | null> {
+async function fetchTMDBWithRetry(
+  url: string,
+  retries = 3
+): Promise<Response | null> {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, {
         headers: {
-          'Accept': 'application/json',
+          Accept: "application/json",
         },
       });
       return response;
     } catch (error) {
       console.warn(`⚠️ TMDB fetch attempt ${i + 1} failed:`, error);
       if (i < retries - 1) {
-        await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+        await new Promise((r) => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
       }
     }
   }
@@ -100,10 +144,10 @@ async function fetchTMDBWithRetry(url: string, retries = 3): Promise<Response | 
 }
 
 async function getTMDBFallbackRecommendations(
-  watchlist: any[],
+  watchlist: WatchlistItem[],
   tmdbKey: string
-): Promise<any[]> {
-  const fallbackRecs: any[] = [];
+): Promise<Recommendation[]> {
+  const fallbackRecs: Recommendation[] = [];
   const maxSeeds = 3;
 
   for (const item of watchlist.slice(0, maxSeeds)) {
@@ -111,13 +155,13 @@ async function getTMDBFallbackRecommendations(
       const simUrl = `https://api.themoviedb.org/3/movie/${encodeURIComponent(
         item.movieId
       )}/similar?api_key=${tmdbKey}`;
-      
+
       const simRes = await fetchTMDBWithRetry(simUrl);
       if (!simRes?.ok) continue;
-      
-      const simData = await simRes.json();
+
+      const simData = (await simRes.json()) as TMDBSearchResponse;
       const top = (simData?.results || []).slice(0, 5);
-      
+
       for (const movie of top) {
         if (!movie?.id || !movie?.title) continue;
         fallbackRecs.push({
@@ -130,10 +174,13 @@ async function getTMDBFallbackRecommendations(
           vote_average: movie.vote_average,
         });
       }
-      
+
       await new Promise((r) => setTimeout(r, 300));
     } catch (error) {
-      console.error(`❌ Failed to get similar movies for ${item.title}:`, error);
+      console.error(
+        `❌ Failed to get similar movies for ${item.title}:`,
+        error
+      );
     }
   }
 
@@ -141,11 +188,11 @@ async function getTMDBFallbackRecommendations(
 }
 
 async function enrichWithTMDBData(
-  recommendations: any[],
+  recommendations: Recommendation[],
   tmdbKey: string
-): Promise<any[]> {
-  const enrichedRecommendations = [];
-  
+): Promise<Recommendation[]> {
+  const enrichedRecommendations: Recommendation[] = [];
+
   for (const rec of recommendations) {
     try {
       if (!rec?.title || typeof rec.title !== "string") {
@@ -158,13 +205,15 @@ async function enrichWithTMDBData(
       )}&api_key=${tmdbKey}`;
 
       const searchResponse = await fetchTMDBWithRetry(url);
-      
+
       if (!searchResponse?.ok) {
-        console.warn(`TMDB responded with status ${searchResponse?.status} for ${rec.title}`);
+        console.warn(
+          `TMDB responded with status ${searchResponse?.status} for ${rec.title}`
+        );
         continue;
       }
 
-      const searchData = await searchResponse.json();
+      const searchData = (await searchResponse.json()) as TMDBSearchResponse;
       if (searchData.results?.length > 0) {
         const movie = searchData.results[0];
         enrichedRecommendations.push({
@@ -210,15 +259,16 @@ export async function GET() {
     }
 
     // 🧩 3️⃣ Fetch user watchlist
-    const watchlist = await prisma.watchlist.findMany({
+    const watchlist = (await prisma.watchlist.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
-    });
+    })) as WatchlistItem[];
 
     if (watchlist.length === 0) {
       return NextResponse.json(
         {
-          error: "No watchlist found. Add some movies to get personalized recommendations.",
+          error:
+            "No watchlist found. Add some movies to get personalized recommendations.",
         },
         { status: 400 }
       );
@@ -227,7 +277,7 @@ export async function GET() {
     // 🧩 3.1️⃣ Check cache first
     const watchlistHash = getWatchlistHash(watchlist);
     const cachedRecs = getCachedRecommendations(session.user.id, watchlistHash);
-    
+
     if (cachedRecs && cachedRecs.length > 0) {
       return NextResponse.json({
         success: true,
@@ -239,50 +289,56 @@ export async function GET() {
     }
 
     // 🧩 4️⃣ Try AI recommendations with error handling
-    let recommendations: any[] = [];
+    let recommendations: Recommendation[] = [];
     let usedFallback = false;
-    
+
     try {
       recommendations = await AIServiceGemini.getPersonalizedRecommendations(
         session.user.id
       );
-    } catch (aiError: any) {
-      console.error("⚠️ Gemini AI service error:", aiError);
-      
+    } catch (aiError) {
+      const error = aiError as Error & { message?: string };
+      console.error("⚠️ Gemini AI service error:", error);
+
       // Check if it's a rate limit error
-      const isRateLimit = 
-        aiError?.message?.includes("429") ||
-        aiError?.message?.includes("quota") ||
-        aiError?.message?.includes("rate limit");
-      
+      const isRateLimit =
+        error?.message?.includes("429") ||
+        error?.message?.includes("quota") ||
+        error?.message?.includes("rate limit");
+
       if (isRateLimit) {
         console.log("📊 Rate limit hit - using TMDB fallback");
         usedFallback = true;
-        
+
         // Use TMDB fallback
-        recommendations = await getTMDBFallbackRecommendations(watchlist, tmdbKey);
-        
+        recommendations = await getTMDBFallbackRecommendations(
+          watchlist,
+          tmdbKey
+        );
+
         if (recommendations.length > 0) {
           const deduped = deduplicateByMovieId(recommendations);
           const final = deduped.slice(0, 10);
-          
+
           // Cache the fallback results
           setCachedRecommendations(session.user.id, watchlistHash, final);
-          
+
           return NextResponse.json({
             success: true,
             recommendations: final,
             count: final.length,
-            message: "AI rate limit reached. Using TMDB similar movies instead.",
+            message:
+              "AI rate limit reached. Using TMDB similar movies instead.",
             fallback: true,
           });
         }
       }
-      
+
       // If not rate limit or fallback failed, return error
       return NextResponse.json(
-        { 
-          error: "AI recommendation service temporarily unavailable. Please try again in a few minutes.",
+        {
+          error:
+            "AI recommendation service temporarily unavailable. Please try again in a few minutes.",
           isRateLimit,
         },
         { status: 503 }
@@ -292,9 +348,12 @@ export async function GET() {
     // 🧩 4.1️⃣ Fallback to TMDB if AI returned no results
     if (!recommendations?.length) {
       console.log("📊 No AI recommendations - using TMDB fallback");
-      recommendations = await getTMDBFallbackRecommendations(watchlist, tmdbKey);
+      recommendations = await getTMDBFallbackRecommendations(
+        watchlist,
+        tmdbKey
+      );
       usedFallback = true;
-      
+
       if (recommendations.length === 0) {
         return NextResponse.json({
           success: true,
@@ -303,13 +362,13 @@ export async function GET() {
           message: "No recommendations available at this time.",
         });
       }
-      
+
       const deduped = deduplicateByMovieId(recommendations);
       const final = deduped.slice(0, 10);
-      
+
       // Cache the results
       setCachedRecommendations(session.user.id, watchlistHash, final);
-      
+
       return NextResponse.json({
         success: true,
         recommendations: final,
@@ -320,12 +379,15 @@ export async function GET() {
     }
 
     // 🧩 5️⃣ Enrich AI recommendations with TMDB data
-    const enrichedRecommendations = await enrichWithTMDBData(recommendations, tmdbKey);
-    
+    const enrichedRecommendations = await enrichWithTMDBData(
+      recommendations,
+      tmdbKey
+    );
+
     // 🧩 6️⃣ Deduplicate and return
     const deduped = deduplicateByMovieId(enrichedRecommendations);
     const final = deduped.slice(0, 10);
-    
+
     // Cache the successful results
     if (final.length > 0) {
       setCachedRecommendations(session.user.id, watchlistHash, final);
@@ -335,9 +397,10 @@ export async function GET() {
       success: true,
       recommendations: final,
       count: final.length,
-      message: usedFallback ? "Using TMDB fallback" : "AI-powered recommendations",
+      message: usedFallback
+        ? "Using TMDB fallback"
+        : "AI-powered recommendations",
     });
-    
   } catch (error) {
     console.error("💥 Error generating AI recommendations:", error);
     return NextResponse.json(
