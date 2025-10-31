@@ -72,7 +72,7 @@ export default function AIRecommendations() {
           showError("Error", errorMsg);
         }
       }
-    } catch (err) {
+    } catch {
       const errorMsg = "Failed to load recommendations";
       setError(errorMsg);
       showError("Error", errorMsg);
