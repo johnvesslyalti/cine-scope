@@ -100,7 +100,7 @@ export default function MovieDetails() {
     return () => {
       mounted = false;
     };
-  }, [id, showError]); // ✅ Added showError to dependencies
+  }, [id]);
 
   // Check if movie is in watchlist (only when user exists)
   useEffect(() => {
