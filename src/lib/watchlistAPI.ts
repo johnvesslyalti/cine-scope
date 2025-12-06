@@ -17,6 +17,6 @@ export const deleteFromWatchlist = async (movieId: string) => {
 };
 
 export const getWatchlist = async () => {
-  const res = await axios.get('/api/watchlist');
+  const res = await axios.get('/api/watchlist', { withCredentials: true });
   return res.data;
 };

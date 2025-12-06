@@ -9,6 +9,7 @@ import { TMDB_API } from "@/lib/tmdb";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 export default function TrendingCarousel() {
   const { trending, setTrending } = useCineStore();
@@ -102,14 +103,16 @@ export default function TrendingCarousel() {
                   whileHover={{ scale: 1.05 }}
                   className="relative w-32 md:w-40 h-[190px] md:h-[240px] rounded-xl overflow-hidden shadow-xl shadow-black/50"
                 >
-                  <Image
-                    src={posterImg}
-                    alt={movie.title || movie.name || "Untitled"}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 128px, 160px"
-                    priority={index === 0}
-                  />
+                  <Link href={`/movie/${movie.id}`}>
+                    <Image
+                      src={posterImg}
+                      alt={movie.title || movie.name || "Untitled"}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 128px, 160px"
+                      priority={index === 0}
+                    />
+                  </Link>
                 </motion.div>
 
                 <div className="text-white max-w-lg">
