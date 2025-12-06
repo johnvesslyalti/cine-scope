@@ -1,6 +1,5 @@
 "use client";
 
-import AISearchAssistant from "@/components/AISearchAssistant";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -173,13 +172,6 @@ export default function SearchClient() {
           </h1>
 
           <div className="flex gap-2">
-            <AISearchAssistant
-              onSearch={(query) =>
-                router.push(`/search?q=${encodeURIComponent(query)}`)
-              }
-              currentQuery={query}
-              searchHistory={searchHistory}
-            />
 
             <button
               onClick={() => setShowFilters(!showFilters)}
