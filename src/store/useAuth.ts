@@ -1,7 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { createAuthClient } from "better-auth/react";
 import React from 'react';
+
+// Create Better Auth client
+export const authClient = createAuthClient({
+  // you can pass client configuration here
+});
 
 interface User {
   id: string;
@@ -26,24 +31,33 @@ export const useAuth = create<AuthState>()(
       user: null,
       isLoading: false,
       isAuthenticated: false,
-      
+
       login: async (provider = 'google') => {
         console.log('Auth store login called with provider:', provider);
         set({ isLoading: true });
         try {
           console.log('Calling signIn...');
-          const result = await signIn(provider, { callbackUrl: '/' });
+          const result = await authClient.signIn.social({
+            provider: provider as any,
+            callbackURL: '/'
+          });
           console.log('signIn result:', result);
         } catch (error) {
           console.error('Login error:', error);
           set({ isLoading: false });
         }
       },
-      
+
       logout: async () => {
         set({ isLoading: true });
         try {
-          await signOut({ callbackUrl: '/' });
+          await authClient.signOut({
+            fetchOptions: {
+              onSuccess: () => {
+                window.location.href = '/';
+              }
+            }
+          });
           set({ user: null, isAuthenticated: false });
         } catch (error) {
           console.error('Logout error:', error);
@@ -51,15 +65,15 @@ export const useAuth = create<AuthState>()(
           set({ isLoading: false });
         }
       },
-      
+
       setUser: (user: User | null) => {
-        set({ 
-          user, 
+        set({
+          user,
           isAuthenticated: !!user,
-          isLoading: false 
+          isLoading: false
         });
       },
-      
+
       setLoading: (loading: boolean) => {
         set({ isLoading: loading });
       },
@@ -71,14 +85,14 @@ export const useAuth = create<AuthState>()(
   )
 );
 
-// Hook to sync NextAuth session with Zustand store
+// Hook to sync Better Auth session with Zustand store
 export const useAuthSync = () => {
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
   const { setUser } = useAuth();
-  
+
   React.useEffect(() => {
-    if (status === 'loading') return;
-    
+    if (isPending) return;
+
     if (session?.user) {
       setUser({
         id: session.user.id || '',
@@ -89,5 +103,5 @@ export const useAuthSync = () => {
     } else {
       setUser(null);
     }
-  }, [session, status, setUser]);
+  }, [session, isPending, setUser]);
 };

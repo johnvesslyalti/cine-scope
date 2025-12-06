@@ -8,21 +8,23 @@ import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark, FaStar } from 'react-icons/fa';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { useAuth } from '@/store/useAuth';
-import { useSession } from 'next-auth/react';
 import { Movie } from '@/store/cineStore';
 import { Alert, AlertDescription } from './ui/alert';
 import { WatchlistMovie } from '@/types';
+import { authClient } from '@/lib/auth-client';
 
 export default function NowPlayingMovies() {
   const { user } = useAuth();
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
+
+  // --- State ---
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-
+  // --- Fetch Now Playing ---
   useEffect(() => {
     const fetchNowPlaying = async () => {
       try {
@@ -35,36 +37,42 @@ export default function NowPlayingMovies() {
         setLoading(false);
       }
     };
+
     fetchNowPlaying();
   }, []);
 
+  // --- Fetch Watchlist ---
   useEffect(() => {
+    if (isPending) return; // Wait for BetterAuth session to load
+
+    if (!user || !session?.user) {
+      setAddedMovieIds(new Set());
+      return;
+    }
+
     const fetchWatchlist = async () => {
-      // Wait for session to be loaded
-      if (status === 'loading') return;
-      
-      // Check both Zustand user state and NextAuth session
-      if (!user || !session?.user) {
-        setAddedMovieIds(new Set()); // clear when user logs out / not present
-        return;
-      }
-      
       try {
         const res = await axios.get('/api/watchlist');
-        const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
+        const ids = res.data.data.map(
+          (item: { movieId: string }) => item.movieId.toString()
+        );
         setAddedMovieIds(new Set(ids));
       } catch (err) {
         console.error('Failed to fetch watchlist:', err);
       }
     };
-    fetchWatchlist();
-  }, [user, session, status]);
 
+    fetchWatchlist();
+  }, [user, session, isPending]);
+
+  // --- Toggle Watchlist ---
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
-    if (!user || !session?.user) return; // extra safety
-    
+    if (!user || !session?.user) return;
+
     const movieId = movie.id.toString();
+
     if (addedMovieIds.has(movieId)) {
+      // Remove
       try {
         await deleteFromWatchlist(movieId);
         setAddedMovieIds((prev) => {
@@ -77,6 +85,7 @@ export default function NowPlayingMovies() {
         setAlertMessage('Failed to remove');
       }
     } else {
+      // Add
       try {
         await addToWatchlist(movie);
         setAddedMovieIds((prev) => new Set(prev).add(movieId));
@@ -85,9 +94,11 @@ export default function NowPlayingMovies() {
         setAlertMessage('Failed to add');
       }
     }
+
     setTimeout(() => setAlertMessage(null), 3000);
   };
 
+  // --- UI Loading Skeleton ---
   if (loading) {
     return (
       <div className="flex gap-4 px-6 mt-10 overflow-x-auto no-scrollbar">
@@ -105,6 +116,7 @@ export default function NowPlayingMovies() {
     return <p className="text-red-500 px-6">Failed to load now playing movies.</p>;
   }
 
+  // --- Main UI ---
   return (
     <section className="px-6 py-8 bg-black relative">
       {alertMessage && (
@@ -113,10 +125,11 @@ export default function NowPlayingMovies() {
         </Alert>
       )}
 
-      <h2 className="text-3xl font-extrabold mb-6 text-white tracking-tight">🎬 Now Playing</h2>
+      <h2 className="text-3xl font-extrabold mb-6 text-white tracking-tight">
+        🎬 Now Playing
+      </h2>
 
       <div className="relative">
-        {/* Scroll gradient */}
         <div className="absolute left-0 top-0 h-full w-12 bg-gradient-to-r from-black to-transparent z-10" />
         <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-black to-transparent z-10" />
 
@@ -129,14 +142,13 @@ export default function NowPlayingMovies() {
                 key={movie.id}
                 className="relative min-w-[160px] max-w-[160px] hover:scale-105 transition-transform duration-300 snap-start group"
               >
-                {/* Watchlist button only if logged in */}
+                {/* Watchlist button */}
                 {user && session?.user && (
                   <button
-                    className={`absolute top-2 right-2 z-20 p-2 rounded-full shadow-md transition-transform transform hover:scale-110 ${
-                      isAdded
-                        ? 'bg-yellow-400 text-black'
-                        : 'bg-black/70 text-white hover:bg-white/80 hover:text-black'
-                    }`}
+                    className={`absolute top-2 right-2 z-20 p-2 rounded-full shadow-md transition-transform transform hover:scale-110 ${isAdded
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-black/70 text-white hover:bg-white/80 hover:text-black'
+                      }`}
                     onClick={() =>
                       handleToggleWatchlist({
                         id: movie.id,
@@ -150,7 +162,7 @@ export default function NowPlayingMovies() {
                   </button>
                 )}
 
-                {/* Movie Poster */}
+                {/* Poster */}
                 <Link href={`/movie/${movie.id}`} passHref>
                   <div className="aspect-[2/3] w-full rounded-xl overflow-hidden bg-zinc-900 shadow-lg relative group-hover:shadow-yellow-500/40 transition-all duration-300">
                     {movie.poster_path ? (
@@ -168,7 +180,7 @@ export default function NowPlayingMovies() {
                   </div>
                 </Link>
 
-                {/* Title + Rating */}
+                {/* Title & Rating */}
                 <div className="mt-2 text-center">
                   <p
                     className="text-sm font-medium text-gray-200 truncate px-1 group-hover:text-yellow-400 transition-colors duration-200"
@@ -177,7 +189,7 @@ export default function NowPlayingMovies() {
                     {movie.title}
                   </p>
                   <p className="text-xs text-center text-yellow-400 flex items-center justify-center gap-1">
-                    <FaStar className="text-yellow-400" /> {movie.vote_average?.toFixed(1)}
+                    <FaStar /> {movie.vote_average?.toFixed(1)}
                   </p>
                 </div>
               </div>

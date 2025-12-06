@@ -8,15 +8,14 @@ import { FaBookmark, FaRegBookmark, FaStar } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
-import { useAuth } from '@/store/useAuth';
-import { useSession } from 'next-auth/react';
+import { authClient, useAuth } from '@/store/useAuth';
 import { Alert, AlertDescription } from './ui/alert';
 import { WatchlistMovie } from '@/types';
 import { motion } from 'framer-motion';
 
 export default function Popular() {
   const { user } = useAuth();
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [popular, setPopular] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -44,7 +43,7 @@ export default function Popular() {
     const fetchWatchlist = async () => {
       // Wait for session to be loaded
       if (status === 'loading') return;
-      
+
       // Check both Zustand user state and NextAuth session
       if (!user || !session?.user) {
         setAddedMovieIds(new Set()); // clear when user logs out / not present
@@ -54,15 +53,15 @@ export default function Popular() {
         const res = await axios.get('/api/watchlist');
         const ids = res.data.data.map((item: { movieId: string }) => item.movieId.toString());
         setAddedMovieIds(new Set(ids));
-      } catch {}
+      } catch { }
     };
     fetchWatchlist();
-  }, [user, session, status]);
+  }, [user, session, isPending]);
 
   // Toggle watchlist
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
     if (!user || !session?.user) return; // extra safety
-    
+
     const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
@@ -73,13 +72,13 @@ export default function Popular() {
           return updated;
         });
         setAlertMessage('Removed from Watchlist');
-      } catch {}
+      } catch { }
     } else {
       try {
         await addToWatchlist(movie);
         setAddedMovieIds(prev => new Set(prev).add(movieId));
         setAlertMessage('Added to Watchlist');
-      } catch {}
+      } catch { }
     }
     setTimeout(() => setAlertMessage(null), 2500);
   };
@@ -134,11 +133,10 @@ export default function Popular() {
                       poster_path: movie.poster_path,
                     })
                   }
-                  className={`absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition ${
-                    isAdded
-                      ? 'bg-yellow-400 text-black'
-                      : 'bg-black/60 text-white hover:bg-white hover:text-black'
-                  }`}
+                  className={`absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition ${isAdded
+                    ? 'bg-yellow-400 text-black'
+                    : 'bg-black/60 text-white hover:bg-white hover:text-black'
+                    }`}
                 >
                   {isAdded ? <FaBookmark /> : <FaRegBookmark />}
                 </motion.button>

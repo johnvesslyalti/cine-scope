@@ -7,12 +7,12 @@ import Link from 'next/link';
 import { TMDB_API } from '@/lib/tmdb';
 import { FaBookmark, FaRegBookmark, FaStar } from 'react-icons/fa';
 import { useAuth } from '@/store/useAuth';
-import { useSession } from 'next-auth/react';
 import { WatchlistMovie } from '@/types';
 import { addToWatchlist, deleteFromWatchlist } from '@/lib/watchlistAPI';
 import { Alert, AlertDescription } from './ui/alert';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { authClient } from '@/lib/auth-client';
 
 interface WatchlistResponse {
   data: { movieId: string }[];
@@ -20,7 +20,7 @@ interface WatchlistResponse {
 
 export default function TopRatedMovies() {
   const { user } = useAuth();
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [addedMovieIds, setAddedMovieIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function TopRatedMovies() {
     const fetchWatchList = async () => {
       // Wait for session to be loaded
       if (status === 'loading') return;
-      
+
       // Check both Zustand user state and NextAuth session
       if (!user || !session?.user) {
         setAddedMovieIds(new Set()); // clear when user logs out / not present
@@ -55,14 +55,14 @@ export default function TopRatedMovies() {
       try {
         const res = await axios.get<WatchlistResponse>('/api/watchlist');
         setAddedMovieIds(new Set(res.data.data.map((item) => item.movieId.toString())));
-      } catch {}
+      } catch { }
     };
     fetchWatchList();
-  }, [user, session, status]);
+  }, [user, session, isPending]);
 
   const handleToggleWatchlist = async (movie: WatchlistMovie) => {
     if (!user || !session?.user) return; // extra safety
-    
+
     const movieId = movie.id.toString();
     if (addedMovieIds.has(movieId)) {
       try {
@@ -137,11 +137,10 @@ export default function TopRatedMovies() {
                       poster_path: movie.poster_path,
                     })
                   }
-                  className={`absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition ${
-                    isAdded
-                      ? 'bg-yellow-400 text-black'
-                      : 'bg-black/60 text-white hover:bg-white hover:text-black'
-                  }`}
+                  className={`absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition ${isAdded
+                    ? 'bg-yellow-400 text-black'
+                    : 'bg-black/60 text-white hover:bg-white hover:text-black'
+                    }`}
                   title={isAdded ? 'Remove from Watchlist' : 'Add to Watchlist'}
                 >
                   {isAdded ? <FaBookmark /> : <FaRegBookmark />}
