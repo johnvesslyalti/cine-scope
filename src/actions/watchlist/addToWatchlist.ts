@@ -1,15 +1,18 @@
 'use server';
 
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
 import { ensureMovieExists } from "@/lib/ensureMovieExists";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 
 export async function addToWatchlist(tmdbId: string) {
-    const { data: session } = authClient.useSession()
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
 
     if (!session) throw new Error("Unauthorized");
 
-    const userId = session.user.id;
+    const userId = session.user.id
 
     const movie = await ensureMovieExists(tmdbId);
 

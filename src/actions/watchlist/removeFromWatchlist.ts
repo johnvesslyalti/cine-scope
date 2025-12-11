@@ -1,10 +1,13 @@
 'use server';
 
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 
 export async function removeFromWatchlist(tmdbId: string) {
-    const { data: session } = authClient.useSession()
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
 
     if (!session) throw new Error("Unauthorized");
 
