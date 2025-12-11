@@ -1,24 +1,5 @@
-// -----------------------------------------------------
-// TMDB Service Layer for CineScope 2.0
-// Works for BOTH: 
-//   ✔ Frontend components (existing code)
-//   ✔ Backend Server Components, Server Actions & API Routes
-// -----------------------------------------------------
-
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-// IMPORTANT: This should NOT be NEXT_PUBLIC anymore. 
-// Use server-side only: TMDB_API_KEY=.env
-
 const BASE_URL = "https://api.themoviedb.org/3";
-
-if (!API_KEY) {
-  console.warn("⚠ Missing TMDB_API_KEY in .env");
-}
-
-// =====================================================
-// 1️⃣ FRONTEND-COMPATIBLE API (YOUR ORIGINAL CODE)
-// =====================================================
-// This section STAYS EXACTLY as you had it so NOTHING breaks.
 
 export const TMDB_API = {
   trending: `${BASE_URL}/trending/all/day?api_key=${API_KEY}`,
@@ -47,56 +28,32 @@ export const TMDB_API = {
   genres: `${BASE_URL}/genre/movie/list?api_key=${API_KEY}`,
 };
 
-// FRONTEND IMAGE BUILDER
 export const TMDB_IMAGE = (path: string, size = "w500") =>
   path ? `https://image.tmdb.org/t/p/${size}${path}` : "/fallback-poster.jpg";
 
-
-// =====================================================
-// 2️⃣ BACKEND SERVICE HELPERS (Server Components / Actions)
-// =====================================================
-// These do NOT break your frontend — they are NEW functions.
-
 async function tmdbFetch(url: string) {
-  try {
-    const res = await fetch(url, {
-      next: { revalidate: 3600 }, // Cache for 1 hour (prevents rate-limit)
-    });
-
-    if (!res.ok) {
-      console.error("TMDB Error:", res.status, res.statusText);
-      throw new Error("Failed TMDB request");
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error("TMDB Network Error:", error);
-    throw error;
-  }
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("TMDB fetch failed");
+  return res.json();
 }
 
-// 📌 Full movie details (with credits + videos)
 export async function getMovieDetails(id: string, lang = "en-US") {
   const url = `${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=${lang}&append_to_response=credits,videos`;
   return tmdbFetch(url);
 }
 
-// 📌 Similar movies
 export async function getSimilarMovies(id: string) {
   return tmdbFetch(`${BASE_URL}/movie/${id}/similar?api_key=${API_KEY}`);
 }
 
-// 📌 Credits only (if you need separately)
 export async function getMovieCredits(id: string) {
   return tmdbFetch(`${BASE_URL}/movie/${id}/credits?api_key=${API_KEY}`);
 }
 
-// 📌 Videos (trailers)
 export async function getMovieVideos(id: string) {
   return tmdbFetch(`${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`);
 }
 
-// 📌 Search (server version)
 export async function searchMovies(query: string) {
   return tmdbFetch(
     `${BASE_URL}/search/movie?query=${encodeURIComponent(
@@ -105,7 +62,6 @@ export async function searchMovies(query: string) {
   );
 }
 
-// 📌 Category endpoints (server version)
 export async function getTrendingMovies() {
   return tmdbFetch(`${BASE_URL}/trending/all/day?api_key=${API_KEY}`);
 }

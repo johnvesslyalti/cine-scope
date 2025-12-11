@@ -26,10 +26,28 @@ export default function WatchlistButton({
   return (
     <button
       onClick={toggle}
-      className={`px-4 py-2 rounded-lg ${isInWatchlist ? "bg-red-500" : "bg-yellow-400"
-        }`}
+      disabled={pending}
+      className={`
+        flex items-center gap-2
+        px-4 py-2 rounded-xl font-medium
+        transition-colors duration-300
+        ${isInWatchlist ? "bg-red-500 hover:bg-red-600" : "bg-yellow-400 hover:bg-yellow-500"}
+        ${pending ? "opacity-70 cursor-not-allowed" : ""}
+      `}
     >
-      {pending ? "Processing..." : isInWatchlist ? "Remove" : "Add to Watchlist"}
+      {/* Icon */}
+      {!pending && (
+        <span>
+          {isInWatchlist ? "−" : "+"}
+        </span>
+      )}
+
+      {/* Label */}
+      {pending
+        ? "Processing..."
+        : isInWatchlist
+          ? "Remove from Watchlist"
+          : "Add to Watchlist"}
     </button>
   );
 }
