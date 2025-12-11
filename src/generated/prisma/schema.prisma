@@ -12,21 +12,27 @@ datasource db {
 }
 
 // ===============================================
-// USER & AUTH MODELS (Better Auth Compatible)
+// BETTER AUTH REQUIRED MODELS
 // ===============================================
 
 model User {
   id            String   @id @default(cuid())
-  name          String   @unique
+  name          String
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
-  bio           String?  @db.VarChar(500)
-  role          String   @default("user") // NEW: "user" | "admin"
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // App Relations
+  // Your custom fields
+  bio  String? @db.VarChar
+  role String  @default("user")
+
+  // Better Auth relations
+  sessions Session[]
+  accounts Account[]
+
+  // Your app relations
   watchlists  Watchlist[]
   reviews     Review[]
   preferences UserPreference[]
@@ -36,8 +42,52 @@ model User {
   aiQueryLogs AIQueryLog[]
 }
 
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
 // ===============================================
-// MOVIE MODEL
+// YOUR APPLICATION MODELS
 // ===============================================
 
 model Movie {
@@ -50,7 +100,7 @@ model Movie {
   genres         String[]
   director       String?
   cast           String[]
-  plotSummary    String?  @db.VarChar(5000)
+  plotSummary    String?  @db.VarChar
   ratingImdb     Float?
   ratingTmdb     Float?
 
@@ -59,10 +109,6 @@ model Movie {
   reviews     Review[]
   preferences UserPreference[]
 }
-
-// ===============================================
-// WATCHLIST MODEL
-// ===============================================
 
 model Watchlist {
   id        String   @id @default(uuid())
@@ -75,10 +121,6 @@ model Watchlist {
 
   @@unique([userId, movieId])
 }
-
-// ===============================================
-// USER PREFERENCES
-// ===============================================
 
 model UserPreference {
   id          String    @id @default(uuid())
@@ -98,16 +140,12 @@ model UserPreference {
   @@unique([userId, movieId])
 }
 
-// ===============================================
-// REVIEW MODEL
-// ===============================================
-
 model Review {
   id        String   @id @default(uuid())
   userId    String
   movieId   String
   score     Int
-  text      String   @db.VarChar(5000)
+  text      String   @db.VarChar
   createdAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id])
@@ -115,10 +153,6 @@ model Review {
 
   @@unique([userId, movieId])
 }
-
-// ===============================================
-// FOLLOW SYSTEM (SOCIAL)
-// ===============================================
 
 model Follow {
   followerId  String
@@ -130,10 +164,6 @@ model Follow {
   @@id([followerId, followingId])
 }
 
-// ===============================================
-// SEARCH LOGS (ADMIN ANALYTICS)
-// ===============================================
-
 model SearchLog {
   id        String   @id @default(uuid())
   userId    String?
@@ -143,15 +173,11 @@ model SearchLog {
   user User? @relation(fields: [userId], references: [id])
 }
 
-// ===============================================
-// AI QUERY LOG (GEMINI ANALYTICS)
-// ===============================================
-
 model AIQueryLog {
   id        String   @id @default(uuid())
   userId    String?
   prompt    String
-  response  String?  @db.VarChar(5000)
+  response  String?  @db.VarChar
   type      String // e.g. "summary" | "recommendation" | "comparison"
   createdAt DateTime @default(now())
 
