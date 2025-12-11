@@ -65,7 +65,7 @@ export default async function WatchlistPage() {
           </div>
 
           {/* Remove button */}
-          <RemoveButton movieId={item.movieId} />
+          <RemoveButton movieId={item.movie.tmdbId} />
         </div>
       ))}
     </div>
