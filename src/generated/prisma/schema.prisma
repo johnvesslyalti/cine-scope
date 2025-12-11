@@ -97,6 +97,7 @@ model Movie {
   releaseYear    Int
   runtimeMinutes Int?
   posterUrl      String
+  backdropUrl    String
   genres         String[]
   director       String?
   cast           String[]

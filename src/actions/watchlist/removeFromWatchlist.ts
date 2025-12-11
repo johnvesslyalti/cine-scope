@@ -3,11 +3,12 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 export async function removeFromWatchlist(tmdbId: string) {
     const session = await auth.api.getSession({
-        headers: await headers()
-    })
+        headers: await headers(),
+    });
 
     if (!session) throw new Error("Unauthorized");
 
@@ -17,14 +18,16 @@ export async function removeFromWatchlist(tmdbId: string) {
         where: { tmdbId },
     });
 
-    if (!movie) return { success: true };
+    // FIX: return nothing (void)
+    if (!movie) return;
 
     await prisma.watchlist.deleteMany({
         where: {
             userId,
             movieId: movie.id,
-        }
+        },
     });
 
-    return { success: true }
+    // optional: if you want instant UI refresh
+    revalidatePath("/watchlist");
 }

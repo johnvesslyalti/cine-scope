@@ -6569,6 +6569,7 @@ export namespace Prisma {
     releaseYear: number | null
     runtimeMinutes: number | null
     posterUrl: string | null
+    backdropUrl: string | null
     director: string | null
     plotSummary: string | null
     ratingImdb: number | null
@@ -6582,6 +6583,7 @@ export namespace Prisma {
     releaseYear: number | null
     runtimeMinutes: number | null
     posterUrl: string | null
+    backdropUrl: string | null
     director: string | null
     plotSummary: string | null
     ratingImdb: number | null
@@ -6595,6 +6597,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes: number
     posterUrl: number
+    backdropUrl: number
     genres: number
     director: number
     cast: number
@@ -6626,6 +6629,7 @@ export namespace Prisma {
     releaseYear?: true
     runtimeMinutes?: true
     posterUrl?: true
+    backdropUrl?: true
     director?: true
     plotSummary?: true
     ratingImdb?: true
@@ -6639,6 +6643,7 @@ export namespace Prisma {
     releaseYear?: true
     runtimeMinutes?: true
     posterUrl?: true
+    backdropUrl?: true
     director?: true
     plotSummary?: true
     ratingImdb?: true
@@ -6652,6 +6657,7 @@ export namespace Prisma {
     releaseYear?: true
     runtimeMinutes?: true
     posterUrl?: true
+    backdropUrl?: true
     genres?: true
     director?: true
     cast?: true
@@ -6754,6 +6760,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes: number | null
     posterUrl: string
+    backdropUrl: string
     genres: string[]
     director: string | null
     cast: string[]
@@ -6788,6 +6795,7 @@ export namespace Prisma {
     releaseYear?: boolean
     runtimeMinutes?: boolean
     posterUrl?: boolean
+    backdropUrl?: boolean
     genres?: boolean
     director?: boolean
     cast?: boolean
@@ -6807,6 +6815,7 @@ export namespace Prisma {
     releaseYear?: boolean
     runtimeMinutes?: boolean
     posterUrl?: boolean
+    backdropUrl?: boolean
     genres?: boolean
     director?: boolean
     cast?: boolean
@@ -6822,6 +6831,7 @@ export namespace Prisma {
     releaseYear?: boolean
     runtimeMinutes?: boolean
     posterUrl?: boolean
+    backdropUrl?: boolean
     genres?: boolean
     director?: boolean
     cast?: boolean
@@ -6837,6 +6847,7 @@ export namespace Prisma {
     releaseYear?: boolean
     runtimeMinutes?: boolean
     posterUrl?: boolean
+    backdropUrl?: boolean
     genres?: boolean
     director?: boolean
     cast?: boolean
@@ -6845,7 +6856,7 @@ export namespace Prisma {
     ratingTmdb?: boolean
   }
 
-  export type MovieOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tmdbId" | "title" | "releaseYear" | "runtimeMinutes" | "posterUrl" | "genres" | "director" | "cast" | "plotSummary" | "ratingImdb" | "ratingTmdb", ExtArgs["result"]["movie"]>
+  export type MovieOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tmdbId" | "title" | "releaseYear" | "runtimeMinutes" | "posterUrl" | "backdropUrl" | "genres" | "director" | "cast" | "plotSummary" | "ratingImdb" | "ratingTmdb", ExtArgs["result"]["movie"]>
   export type MovieInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     watchlists?: boolean | Movie$watchlistsArgs<ExtArgs>
     reviews?: boolean | Movie$reviewsArgs<ExtArgs>
@@ -6869,6 +6880,7 @@ export namespace Prisma {
       releaseYear: number
       runtimeMinutes: number | null
       posterUrl: string
+      backdropUrl: string
       genres: string[]
       director: string | null
       cast: string[]
@@ -7307,6 +7319,7 @@ export namespace Prisma {
     readonly releaseYear: FieldRef<"Movie", 'Int'>
     readonly runtimeMinutes: FieldRef<"Movie", 'Int'>
     readonly posterUrl: FieldRef<"Movie", 'String'>
+    readonly backdropUrl: FieldRef<"Movie", 'String'>
     readonly genres: FieldRef<"Movie", 'String[]'>
     readonly director: FieldRef<"Movie", 'String'>
     readonly cast: FieldRef<"Movie", 'String[]'>
@@ -14358,6 +14371,7 @@ export namespace Prisma {
     releaseYear: 'releaseYear',
     runtimeMinutes: 'runtimeMinutes',
     posterUrl: 'posterUrl',
+    backdropUrl: 'backdropUrl',
     genres: 'genres',
     director: 'director',
     cast: 'cast',
@@ -14863,6 +14877,7 @@ export namespace Prisma {
     releaseYear?: IntFilter<"Movie"> | number
     runtimeMinutes?: IntNullableFilter<"Movie"> | number | null
     posterUrl?: StringFilter<"Movie"> | string
+    backdropUrl?: StringFilter<"Movie"> | string
     genres?: StringNullableListFilter<"Movie">
     director?: StringNullableFilter<"Movie"> | string | null
     cast?: StringNullableListFilter<"Movie">
@@ -14881,6 +14896,7 @@ export namespace Prisma {
     releaseYear?: SortOrder
     runtimeMinutes?: SortOrderInput | SortOrder
     posterUrl?: SortOrder
+    backdropUrl?: SortOrder
     genres?: SortOrder
     director?: SortOrderInput | SortOrder
     cast?: SortOrder
@@ -14902,6 +14918,7 @@ export namespace Prisma {
     releaseYear?: IntFilter<"Movie"> | number
     runtimeMinutes?: IntNullableFilter<"Movie"> | number | null
     posterUrl?: StringFilter<"Movie"> | string
+    backdropUrl?: StringFilter<"Movie"> | string
     genres?: StringNullableListFilter<"Movie">
     director?: StringNullableFilter<"Movie"> | string | null
     cast?: StringNullableListFilter<"Movie">
@@ -14920,6 +14937,7 @@ export namespace Prisma {
     releaseYear?: SortOrder
     runtimeMinutes?: SortOrderInput | SortOrder
     posterUrl?: SortOrder
+    backdropUrl?: SortOrder
     genres?: SortOrder
     director?: SortOrderInput | SortOrder
     cast?: SortOrder
@@ -14943,6 +14961,7 @@ export namespace Prisma {
     releaseYear?: IntWithAggregatesFilter<"Movie"> | number
     runtimeMinutes?: IntNullableWithAggregatesFilter<"Movie"> | number | null
     posterUrl?: StringWithAggregatesFilter<"Movie"> | string
+    backdropUrl?: StringWithAggregatesFilter<"Movie"> | string
     genres?: StringNullableListFilter<"Movie">
     director?: StringNullableWithAggregatesFilter<"Movie"> | string | null
     cast?: StringNullableListFilter<"Movie">
@@ -15678,6 +15697,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -15696,6 +15716,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -15714,6 +15735,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -15732,6 +15754,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -15750,6 +15773,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -15765,6 +15789,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -15780,6 +15805,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -16536,6 +16562,7 @@ export namespace Prisma {
     releaseYear?: SortOrder
     runtimeMinutes?: SortOrder
     posterUrl?: SortOrder
+    backdropUrl?: SortOrder
     genres?: SortOrder
     director?: SortOrder
     cast?: SortOrder
@@ -16558,6 +16585,7 @@ export namespace Prisma {
     releaseYear?: SortOrder
     runtimeMinutes?: SortOrder
     posterUrl?: SortOrder
+    backdropUrl?: SortOrder
     director?: SortOrder
     plotSummary?: SortOrder
     ratingImdb?: SortOrder
@@ -16571,6 +16599,7 @@ export namespace Prisma {
     releaseYear?: SortOrder
     runtimeMinutes?: SortOrder
     posterUrl?: SortOrder
+    backdropUrl?: SortOrder
     director?: SortOrder
     plotSummary?: SortOrder
     ratingImdb?: SortOrder
@@ -18622,6 +18651,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -18639,6 +18669,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -18723,6 +18754,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -18740,6 +18772,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -18802,6 +18835,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -18819,6 +18853,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -18903,6 +18938,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -18920,6 +18956,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -18982,6 +19019,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -18999,6 +19037,7 @@ export namespace Prisma {
     releaseYear: number
     runtimeMinutes?: number | null
     posterUrl: string
+    backdropUrl: string
     genres?: MovieCreategenresInput | string[]
     director?: string | null
     cast?: MovieCreatecastInput | string[]
@@ -19083,6 +19122,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]
@@ -19100,6 +19140,7 @@ export namespace Prisma {
     releaseYear?: IntFieldUpdateOperationsInput | number
     runtimeMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     posterUrl?: StringFieldUpdateOperationsInput | string
+    backdropUrl?: StringFieldUpdateOperationsInput | string
     genres?: MovieUpdategenresInput | string[]
     director?: NullableStringFieldUpdateOperationsInput | string | null
     cast?: MovieUpdatecastInput | string[]

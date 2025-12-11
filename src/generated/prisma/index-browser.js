@@ -175,6 +175,7 @@ exports.Prisma.MovieScalarFieldEnum = {
   releaseYear: 'releaseYear',
   runtimeMinutes: 'runtimeMinutes',
   posterUrl: 'posterUrl',
+  backdropUrl: 'backdropUrl',
   genres: 'genres',
   director: 'director',
   cast: 'cast',

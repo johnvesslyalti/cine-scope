@@ -1,57 +1,30 @@
-'use client';
+// src/app/watchlist/page.tsx
+import Image from "next/image";
+import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import RemoveButton from "./RemoveButton";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { FaTrash } from 'react-icons/fa';
-import { motion } from 'framer-motion';
-import { deleteFromWatchlist, getWatchlist } from '@/lib/watchlistAPI';
+export default async function WatchlistPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
 
-interface WatchlistItem {
-  movieId: string;
-  title: string;
-  posterUrl: string;
-  createdAt: string;
-}
-
-export default function Watchlist() {
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await getWatchlist();
-        setWatchlist(res.data || []);
-      } catch (err) {
-        console.error('Fetch watchlist error:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  const handleRemove = async (movieId: string) => {
-    try {
-      await deleteFromWatchlist(movieId);
-      setWatchlist((prev) => prev.filter((m) => m.movieId !== movieId));
-    } catch (err) {
-      console.error('Delete error:', err);
-    }
-  };
-
-  if (loading) {
+  if (!session?.user) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-gray-800 animate-pulse rounded-xl h-[300px]"
-          />
-        ))}
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+        <p className="text-lg font-semibold">You must be logged in</p>
+        <p className="text-gray-400">Please sign in to view your watchlist.</p>
       </div>
     );
   }
+
+  // FETCH WATCHLIST + MOVIE DETAILS
+  const watchlist = await prisma.watchlist.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      movie: true, // ❤️ THIS FETCHES THE MOVIE DATA
+    },
+  });
 
   if (watchlist.length === 0) {
     return (
@@ -71,39 +44,29 @@ export default function Watchlist() {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
-      {watchlist.map((movie) => (
-        <motion.div
-          key={movie.movieId}
-          whileHover={{ scale: 1.05 }}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
+      {watchlist.map((item) => (
+        <div
+          key={item.movieId}
           className="relative rounded-xl overflow-hidden shadow-md group"
         >
-          {/* Poster */}
           <Image
-            src={movie.posterUrl}
-            alt={movie.title}
+            src={item.movie.posterUrl}
+            alt={item.movie.title}
             width={200}
             height={300}
-            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+            className="object-cover w-full h-full"
           />
 
-          {/* Gradient + Title */}
+          {/* Title overlay */}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
             <span className="text-white font-semibold text-sm line-clamp-1">
-              {movie.title}
+              {item.movie.title}
             </span>
           </div>
 
-          {/* Remove Button (Always visible) */}
-          <button
-            onClick={() => handleRemove(movie.movieId)}
-            className="absolute top-2 right-2 bg-black/70 p-2 rounded-full text-red-400 hover:text-red-600 hover:bg-black/90 transition"
-          >
-            <FaTrash size={16} />
-          </button>
-        </motion.div>
+          {/* Remove button */}
+          <RemoveButton movieId={item.movieId} />
+        </div>
       ))}
     </div>
   );

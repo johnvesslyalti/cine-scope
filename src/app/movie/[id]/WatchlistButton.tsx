@@ -1,3 +1,4 @@
+// src/app/movie/[id]/page.tsx
 "use client";
 
 import { addToWatchlist } from "@/actions/watchlist/addToWatchlist";
