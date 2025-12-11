@@ -1,3 +1,6 @@
+// This is your upgraded schema.prisma file for Cine-Scope
+// It incorporates Authentication, Personalization, and Social features.
+
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -5,20 +8,36 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Note: Add your connection URL here
+  // url      = env("DATABASE_URL") 
 }
+
+// =========================================================
+// 1. CORE AUTHENTICATION MODELS (Your Existing Structure)
+// =========================================================
 
 model User {
   id            String   @id @default(cuid())
   name          String
-  email         String
+  email         String   @unique
   emailVerified Boolean
   image         String?
+  bio           String?  @db.VarChar(500) // NEW: User bio for social profile
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  watchlist Watchlist[]
+  // Auth Relations
+  accounts Account[]
+  sessions Session[]
+
+  // Custom App Relations (Watchlist, Reviews, Following, etc.)
+  watchlists  Watchlist[]
+  reviews     Review[]
+  preferences UserPreference[]
+
+  // Self-Relations for Following/Followers
+  followers Follow[] @relation("Following") // Users who follow this user
+  following Follow[] @relation("Followers") // Users this user is following
 
   @@map("user")
 }
@@ -73,15 +92,97 @@ model Verification {
   @@map("verification")
 }
 
-// Your custom model
+// =========================================================
+// 2. CORE MOVIE DATA MODEL (NEW)
+// =========================================================
+
+model Movie {
+  id             String   @id @default(uuid())
+  tmdbId         String   @unique // Essential for connecting to external APIs
+  title          String
+  releaseYear    Int
+  runtimeMinutes Int?
+  posterUrl      String
+  genres         String[] // Stored as an array of strings (PostgreSQL ARRAY type)
+  director       String?
+  cast           String[] // Array of main actors/actresses
+  plotSummary    String?  @db.VarChar(5000)
+  ratingImdb     Float? // External rating for reference
+  ratingTmdb     Float? // External rating for reference
+
+  // Relations
+  watchlists  Watchlist[]
+  reviews     Review[]
+  preferences UserPreference[]
+
+  @@map("movie")
+}
+
+// =========================================================
+// 3. PERSONALIZATION AND TRACKING MODELS (NEW/UPDATED)
+// =========================================================
 
 model Watchlist {
   id        String   @id @default(uuid())
   userId    String
   movieId   String
   createdAt DateTime @default(now())
-  posterUrl String
-  title     String
 
-  user User @relation(fields: [userId], references: [id])
+  // Note: Removed posterUrl and title; we rely on the Movie model for this data (better normalization)
+
+  user  User  @relation(fields: [userId], references: [id])
+  movie Movie @relation(fields: [movieId], references: [id])
+
+  @@unique([userId, movieId]) // Ensures a movie is only on a user's watchlist once
+  @@map("watchlist")
+}
+
+model UserPreference {
+  id          String    @id @default(uuid())
+  userId      String
+  movieId     String
+  rating      Int? // The user's specific rating (e.g., 1-10)
+  isWatched   Boolean   @default(false)
+  lastWatched DateTime?
+
+  // Custom preference tags for fine-tuning ML model
+  isRecommended Boolean @default(false) // Flag if this movie was recommended to the user
+  isHidden      Boolean @default(false) // Flag if the user explicitly hid this movie
+
+  user  User  @relation(fields: [userId], references: [id])
+  movie Movie @relation(fields: [movieId], references: [id])
+
+  @@unique([userId, movieId]) // A user can only have one set of preferences per movie
+  @@map("user_preference")
+}
+
+// =========================================================
+// 4. COMMUNITY AND SOCIAL MODELS (NEW)
+// =========================================================
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  movieId   String
+  score     Int // The rating given in the review (1-10)
+  text      String   @db.VarChar(5000) // Review text
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  movie Movie @relation(fields: [movieId], references: [id])
+
+  @@unique([userId, movieId]) // A user can only write one review per movie
+  @@map("review")
+}
+
+model Follow {
+  followerId  String
+  followingId String
+
+  // Self-Relations for User model
+  follower  User @relation("Following", fields: [followerId], references: [id])
+  following User @relation("Followers", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId]) // Composite key for the follow relationship
+  @@map("follow")
 }

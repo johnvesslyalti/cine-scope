@@ -126,6 +126,7 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   emailVerified: 'emailVerified',
   image: 'image',
+  bio: 'bio',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -166,13 +167,51 @@ exports.Prisma.VerificationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.MovieScalarFieldEnum = {
+  id: 'id',
+  tmdbId: 'tmdbId',
+  title: 'title',
+  releaseYear: 'releaseYear',
+  runtimeMinutes: 'runtimeMinutes',
+  posterUrl: 'posterUrl',
+  genres: 'genres',
+  director: 'director',
+  cast: 'cast',
+  plotSummary: 'plotSummary',
+  ratingImdb: 'ratingImdb',
+  ratingTmdb: 'ratingTmdb'
+};
+
 exports.Prisma.WatchlistScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   movieId: 'movieId',
-  createdAt: 'createdAt',
-  posterUrl: 'posterUrl',
-  title: 'title'
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserPreferenceScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  movieId: 'movieId',
+  rating: 'rating',
+  isWatched: 'isWatched',
+  lastWatched: 'lastWatched',
+  isRecommended: 'isRecommended',
+  isHidden: 'isHidden'
+};
+
+exports.Prisma.ReviewScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  movieId: 'movieId',
+  score: 'score',
+  text: 'text',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.FollowScalarFieldEnum = {
+  followerId: 'followerId',
+  followingId: 'followingId'
 };
 
 exports.Prisma.SortOrder = {
@@ -196,7 +235,11 @@ exports.Prisma.ModelName = {
   Account: 'Account',
   Session: 'Session',
   Verification: 'Verification',
-  Watchlist: 'Watchlist'
+  Movie: 'Movie',
+  Watchlist: 'Watchlist',
+  UserPreference: 'UserPreference',
+  Review: 'Review',
+  Follow: 'Follow'
 };
 
 /**
